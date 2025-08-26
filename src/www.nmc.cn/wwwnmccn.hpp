@@ -190,7 +190,6 @@ public:
 
 private:
     const char placeInfoSep = '|';
-    QNetworkAccessManager *networkAccessManager;
     QCache<QString, WarnInfoList> activeWarnings;
     QCache<QString, WeatherApiResponse> weathers;
     QCache<QString, HourlyInfoList> hourlyWeathers;
@@ -198,9 +197,9 @@ private:
     QMap<QUrl, QString> stationIdMap;
     QReadWriteLock readWriteLock;
 
-    StationSearchApiResponse searchPlacesApi(const QString &searchString, const int searchLimit = 10);
-    WeatherApiResponse searchWeatherApi(const QString &stationId, const QUrl &referer);
-    HourlyInfoList extractWebPage(const QUrl &webPage);
+    StationSearchApiResponse searchPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
+    WeatherApiResponse searchWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QUrl &referer);
+    HourlyInfoList extractWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, bool windy, bool night) const;
     // Slots
     void onNetworkRequestFinished(QNetworkReply *reply);

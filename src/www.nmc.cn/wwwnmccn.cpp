@@ -24,8 +24,6 @@
 WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
     : IonInterface(parent)
 {
-    networkAccessManager->setParent(this);
-    connect(networkAccessManager, &QNetworkAccessManager::finished, this, &WwwNmcCnIon::onNetworkRequestFinished);
     setInitialized(true);
 }
 
@@ -386,7 +384,7 @@ void WwwNmcCnIon::onNetworkRequestFinished(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-StationSearchApiResponse WwwNmcCnIon::searchPlacesApi(const QString &searchString, const int searchLimit)
+StationSearchApiResponse WwwNmcCnIon::searchPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit)
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
     QNetworkRequest request;
@@ -402,14 +400,14 @@ StationSearchApiResponse WwwNmcCnIon::searchPlacesApi(const QString &searchStrin
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager->get(request);
+    QNetworkReply* _ = networkAccessManager.get(request);
     readWriteLock.lockForRead();
     StationSearchApiResponse response = *searchedStations[searchString];
     readWriteLock.unlock();
     return response;
 }
 
-WeatherApiResponse WwwNmcCnIon::searchWeatherApi(const QString &stationId, const QUrl &referer)
+WeatherApiResponse WwwNmcCnIon::searchWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QUrl &referer)
 {
     QNetworkRequest request;
     QUrl url = (QString)WEATHER_API;
@@ -422,14 +420,14 @@ WeatherApiResponse WwwNmcCnIon::searchWeatherApi(const QString &stationId, const
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, referer.toString());
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager->get(request);
+    QNetworkReply* _ = networkAccessManager.get(request);
     readWriteLock.lockForRead();
     WeatherApiResponse response = *weathers[stationId];
     readWriteLock.unlock();
     return response;
 }
 
-HourlyInfoList WwwNmcCnIon::extractWebPage(const QUrl &webPage)
+HourlyInfoList WwwNmcCnIon::extractWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage)
 {
     QNetworkRequest request;
     request.setUrl(webPage);
@@ -437,7 +435,7 @@ HourlyInfoList WwwNmcCnIon::extractWebPage(const QUrl &webPage)
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager->get(request);
+    QNetworkReply* _ = networkAccessManager.get(request);
     readWriteLock.lockForRead();
     HourlyInfoList response = *hourlyWeathers[stationIdMap[webPage]];
     readWriteLock.unlock();
@@ -456,11 +454,13 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
     // See also: https://techbase.kde.org/Projects/Plasma/Weather/Ions
     qDebug(IONENGINE_WWWNMCCN) << "Update source: " << source;
     const char extraDataSep = ';';
+    QNetworkAccessManager networkAccessManager(this);
+    connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &WwwNmcCnIon::onNetworkRequestFinished);
     QStringList splitSource = source.split(sourceSep);
     if (splitSource.count() >= 3) {
         const QString requestName = splitSource[1];
         if (requestName == "validate") {
-            StationSearchApiResponse response = searchPlacesApi(splitSource[2]);
+            StationSearchApiResponse response = searchPlacesApi(networkAccessManager, splitSource[2]);
             QStringList dataValue = {ION_NAME};
             if (response.code == 0) {
                 const int stationCount = response.data.count();
@@ -498,8 +498,8 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
             const QStringList splitExtraData = splitSource[3].split(extraDataSep);
             if (splitExtraData.count() >= 4) {
                 const QString creditPage = API_BASE + splitExtraData[1];
-                HourlyInfoList hourly = extractWebPage(creditPage);
-                WeatherApiResponse apiResponse = searchWeatherApi(splitExtraData[0], creditPage);
+                HourlyInfoList hourly = extractWebPage(networkAccessManager, creditPage);
+                WeatherApiResponse apiResponse = searchWeatherApi(networkAccessManager, splitExtraData[0], creditPage);
                 qDebug(IONENGINE_WWWNMCCN) << "Responsing weather request...";
 
                 Plasma5Support::DataEngine::Data data;
@@ -639,7 +639,6 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
 
 void WwwNmcCnIon::reset()
 {
-    networkAccessManager->clearConnectionCache();
     readWriteLock.lockForWrite();
     activeWarnings.clear();
     weathers.clear();
