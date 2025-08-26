@@ -1,0 +1,10 @@
+{
+    "KPlugin": {
+        "Description": "www.nmc.cn",
+        "Description[zh_CN]": "www.nmc.cn",
+        "Icon": "noneyet",
+        "Name": "www.nmc.cn",
+        "Name[zh_CN]": "www.nmc.cn"
+    },
+    "X-KDE-ParentApp": "weatherengine"
+}
