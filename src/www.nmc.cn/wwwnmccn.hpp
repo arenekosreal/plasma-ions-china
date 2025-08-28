@@ -75,6 +75,7 @@ private:
     T handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
     {
         if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+            qDebug(IONENGINE_WWWNMCCN) << "Request successfully with content:" << reply->readAll();
             return callable(reply);
         }
         else {

@@ -106,7 +106,7 @@ QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(QNetworkAccessManager &net
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
     QNetworkRequest request;
-    QUrl url = (QString)SEARCH_API;
+    QUrl url(SEARCH_API);
     QUrlQuery query;
     query.addQueryItem("q", encodedSearchString);
     query.addQueryItem("limit", ((QString)"%1").arg(searchLimit));
@@ -114,17 +114,19 @@ QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(QNetworkAccessManager &net
     query.addQueryItem("_", ((QString)"%1").arg(QDateTime::currentMSecsSinceEpoch()));
     url.setQuery(query);
     request.setUrl(url);
+    qDebug(IONENGINE_WWWNMCCN) << "Requesting url:" << url;
     QHttpHeaders headers;
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
+    qDebug(IONENGINE_WWWNMCCN) << "Requesting headers:" << headers;
     return networkAccessManager.get(request);
 }
 
 QNetworkReply *WwwNmcCnIon::requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer)
 {
     QNetworkRequest request;
-    QUrl url = (QString)WEATHER_API;
+    QUrl url(WEATHER_API);
     QUrlQuery query;
     query.addQueryItem("stationid", stationId);
     query.addQueryItem("_", ((QString)"%1").arg(QDateTime::currentMSecsSinceEpoch()));
@@ -165,12 +167,15 @@ QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
 QJsonObject WwwNmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
 {
     qDebug(IONENGINE_WWWNMCCN) << "Setting weather api data based on reply of url: " << reply->url();
-    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll()).object();
-    if (responseObject["code"].toInt(-1) == 0) {
-        return responseObject["data"].toObject();
-    }
-    else {
-        qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+    QJsonParseError error;
+    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll(), &error).object();
+    switch (responseObject["code"].toInt(-1)) {
+        case 0:
+            return responseObject["data"].toObject();
+        case -1:
+            qFatal(IONENGINE_WWWNMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+        default:
+            qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
     }
     QJsonObject ret;
     return ret;
@@ -361,6 +366,7 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
 {
     std::function<QJsonArray(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractSearchApiResponse(r);};
     QJsonArray searchResult = handleNetworkReply(reply, wrapper);
+    qDebug(IONENGINE_WWWNMCCN) << "Deserialized data json array:" << searchResult;
     const int dataCount = searchResult.count();
     QStringList dataToSet = {
         ION_NAME,
@@ -379,13 +385,16 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
             dataToSet += {"place", placeInfoStringParts[1] + "-" + placeInfoStringParts[2], "extra", extraDataParts.join(extraDataSep)};
         }
     }
-    setData(source, "validate", dataToSet.join(sourceSep));
+    const QString dataStringToSet = dataToSet.join(sourceSep);
+    qDebug(IONENGINE_WWWNMCCN) << "Setting data:" << dataStringToSet;
+    setData(source, "validate", dataStringToSet);
 }
 
 void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData)
 {
     std::function<QJsonObject(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWeatherApiResponse(r);};
     QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
+    qDebug(IONENGINE_WWWNMCCN) << "Deserialized data json object:" << apiResponseData;
     if (!apiResponseData.isEmpty()) {
         data.insert("Credit", ION_NAME);
         data.insert("Credit Url", creditUrl);
@@ -514,6 +523,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
     if (splitSource.count() >= 3) {
         const QString requestName = splitSource[1];
         if (requestName == "validate") {
+            qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             QNetworkAccessManager networkAccessManager(this);
             connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                     [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);},
