@@ -6,6 +6,7 @@
 #include <QHttpHeaders>
 #include <QJsonValue>
 #include <QNetworkRequest>
+#include <QRegularExpression>
 #include <QTime>
 #include <QUrlQuery>
 #include <libxml/HTMLparser.h>
@@ -320,17 +321,17 @@ QList<HourlyInfo> WwwNmcCnIon::extractWebPage(QNetworkReply *reply)
 
 bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
 {
-    std::function<bool(QString)> invalidChecker = [](QString i){return i == (QString)INVALID_VALUE_STR;};
-    const QString warnObjectAlert = warnObject["alert"].toString().removeIf(invalidChecker);
-    const QString warnObjectCity = warnObject["city"].toString().removeIf(invalidChecker);
-    const QString warnObjectFmeans = warnObject["fmeans"].toString().removeIf(invalidChecker);
-    const QString warnObjectIssueContent = warnObject["issuecontent"].toString().removeIf(invalidChecker);
-    const QString warnObjectPic = warnObject["pic"].toString().removeIf(invalidChecker);
-    const QString warnObjectPic2 = warnObject["pic2"].toString().removeIf(invalidChecker);
-    const QString warnObjectProvince = warnObject["province"].toString().removeIf(invalidChecker);
-    const QString warnObjectSignalLevel = warnObject["signallevel"].toString().removeIf(invalidChecker);
-    const QString warnObjectSignalType = warnObject["signaltype"].toString().removeIf(invalidChecker);
-    const QString warnObjectUrl = warnObject["url"].toString().removeIf(invalidChecker);
+    QRegularExpression invalidValueRegex("^" INVALID_VALUE_STR "$");
+    const QString warnObjectAlert = warnObject["alert"].toString().remove(invalidValueRegex);
+    const QString warnObjectCity = warnObject["city"].toString().remove(invalidValueRegex);
+    const QString warnObjectFmeans = warnObject["fmeans"].toString().remove(invalidValueRegex);
+    const QString warnObjectIssueContent = warnObject["issuecontent"].toString().remove(invalidValueRegex);
+    const QString warnObjectPic = warnObject["pic"].toString().remove(invalidValueRegex);
+    const QString warnObjectPic2 = warnObject["pic2"].toString().remove(invalidValueRegex);
+    const QString warnObjectProvince = warnObject["province"].toString().remove(invalidValueRegex);
+    const QString warnObjectSignalLevel = warnObject["signallevel"].toString().remove(invalidValueRegex);
+    const QString warnObjectSignalType = warnObject["signaltype"].toString().remove(invalidValueRegex);
+    const QString warnObjectUrl = warnObject["url"].toString().remove(invalidValueRegex);
     const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectCity.isEmpty() && !warnObjectFmeans.isEmpty() &&
                                  !warnObjectIssueContent.isEmpty() && !warnObjectPic.isEmpty() && !warnObjectPic2.isEmpty() &&
                                  !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() && !warnObjectSignalType.isEmpty() &&
