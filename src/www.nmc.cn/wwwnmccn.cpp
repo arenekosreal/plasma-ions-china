@@ -13,6 +13,7 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/tree.h>
+#include <qnamespace.h>
 
 #include "wwwnmccn.hpp"
 
@@ -525,9 +526,10 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             QNetworkAccessManager networkAccessManager(this);
+            Qt::ConnectionType connectionType = (Qt::ConnectionType)(Qt::AutoConnection|Qt::SingleShotConnection);
             connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                     [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);},
-                    Qt::SingleShotConnection);
+                    connectionType);
             requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
             return true;
         }
