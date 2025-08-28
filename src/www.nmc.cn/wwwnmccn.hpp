@@ -1,12 +1,10 @@
 #pragma once
 
 #include <QCache>
+#include <QJsonArray>
 #include <QJsonObject>
-#include <QList>
-#include <QMap>
-#include <QMutex>
 #include <QNetworkAccessManager>
-#include <QReadWriteLock>
+#include <QNetworkReply>
 
 #ifdef ION_LEGACY
 #include <ion.h>
@@ -32,141 +30,7 @@ typedef Ion IonInterface
 // Hourly weather data is hardcoded in FORECAST_CITY_PAGE.
 #define WEATHER_API API_BASE "/rest/weather"
 
-struct StationInfo
-{
-    QString code;
-    QString province;
-    QString city;
-    QString url;
-};
-
-struct BasicWeatherInfo
-{
-    QString info;
-    QString img;
-    double temperature;
-};
-
-struct WeatherInfo : public BasicWeatherInfo
-{
-    double temperatureDiff;
-    int airpressure;
-    int humidity;
-    double rain;
-    int rcomfort;
-    int icomfort;
-    double feelst;
-};
-
-struct BasicWindInfo
-{
-    QString direct;
-    QString power;
-};
-
-struct WindInfo : public BasicWindInfo
-{
-    double degree;
-    double speed;
-};
-
-struct WarnInfo
-{
-    QString alert;
-    QString pic;
-    QString province;
-    QString city;
-    QString url;
-    QString issuecontent;
-    QString fmeans;
-    QString signaltype;
-    QString signallevel;
-    QString pic2;
-    // Not in JSON
-    QDateTime expireTime;
-};
-
-typedef QList<WarnInfo> WarnInfoList;
-
-struct SunriseSunsetInfo
-{
-    QDateTime sunrise;
-    QDateTime sunset;
-};
-
-struct BasicInfo
-{
-    StationInfo station;
-    QDateTime publish_time;
-};
-
-struct RealInfo : public BasicInfo
-{
-    WeatherInfo weather;
-    WindInfo wind;
-    WarnInfo warn;
-    SunriseSunsetInfo sunriseSunset;
-};
-
-struct BasicWeatherWithWindInfo
-{
-    BasicWeatherInfo weather;
-    BasicWindInfo wind;
-};
-
-struct DetailInfo
-{
-    QDate date;
-    QDateTime pt;
-    BasicWeatherWithWindInfo day;
-    BasicWeatherWithWindInfo night;
-    double precipitation;
-};
-
-struct PredictInfo : public BasicInfo
-{
-    QList<DetailInfo> detail;
-};
-
-struct AirInfo
-{
-    QDateTime forecasttime;
-    int aqi;
-    int aq;
-    QString text;
-    QString aqiCode;
-};
-
-struct TempChartInfo
-{
-    QDate time;
-    double max_temp;
-    double min_temp;
-    QString day_img;
-    QString day_text;
-    QString night_img;
-    QString night_text;
-};
-
-struct WeatherInfoData
-{
-    RealInfo real;
-    PredictInfo predict;
-    AirInfo air;
-    QList<TempChartInfo> tempchart;
-};
-
-template<typename T>
-struct ApiResponse
-{
-    QString msg;
-    int code;
-    T data;
-};
-typedef ApiResponse<WeatherInfoData> WeatherApiResponse;
-typedef ApiResponse<QStringList> StationSearchApiResponse;
-
-struct HourlyInfo : public BasicInfo
+struct HourlyInfo
 {
     QDateTime time;
     QString img;
@@ -174,12 +38,16 @@ struct HourlyInfo : public BasicInfo
     double temperature;
     double windSpeed;
     QString windDirect;
-    int pressure;
-    int humidity;
+    double atmosphericPressure;
+    double humidity;
     double possibility;
 };
 
-typedef QList<HourlyInfo> HourlyInfoList;
+struct WarnInfo
+{
+    QDateTime startTime;
+    QJsonObject warnObject;
+};
 
 class Q_DECL_EXPORT WwwNmcCnIon : public IonInterface
 {
@@ -190,23 +58,27 @@ public:
 
 private:
     const char placeInfoSep = '|';
-    QCache<QString, WarnInfoList> activeWarnings;
-    QCache<QString, WeatherApiResponse> weathers;
-    QCache<QString, HourlyInfoList> hourlyWeathers;
-    QCache<QString, StationSearchApiResponse> searchedStations;
-    QMap<QUrl, QString> stationIdMap;
-    QReadWriteLock readWriteLock;
+    const char extraDataSep = ';';
+    QCache<QString, QList<WarnInfo>> warnInfoCache;
 
-    StationSearchApiResponse searchPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
-    WeatherApiResponse searchWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QUrl &referer);
-    HourlyInfoList extractWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
+    QNetworkReply *requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
+    QNetworkReply *requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer);
+    QNetworkReply *requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, bool windy, bool night) const;
-    // Slots
-    void onNetworkRequestFinished(QNetworkReply *reply);
+    bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
+    static QJsonArray extractSearchApiResponse(QNetworkReply *reply);
+    static QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
+    static QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
+    template<typename T>
+    static T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable);
 
 #ifdef ION_LEGACY
 private:
     const char sourceSep = '|';
+    // Slots
+    void onSearchApiRequestFinished(QNetworkReply *reply, const QString &source);
+    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData);
+    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, Plasma5Support::DataEngine::Data &data, const bool callSetData);
 
 // IonInterface API
 protected:

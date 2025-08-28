@@ -4,15 +4,10 @@
 #include <KLocalizedString>
 #include <QDateTime>
 #include <QHttpHeaders>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QJsonValue>
-#include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QTime>
 #include <QUrlQuery>
-#include <QWaitCondition>
 #include <libxml/HTMLparser.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -29,6 +24,7 @@ WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
 
 WwwNmcCnIon::~WwwNmcCnIon()
 {
+    reset();
 }
 
 WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &img, bool windy, bool night) const
@@ -106,285 +102,7 @@ WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &
     }
 }
 
-void WwwNmcCnIon::onNetworkRequestFinished(QNetworkReply *reply)
-{
-    if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
-        QVariant contentType = reply->header(QNetworkRequest::ContentTypeHeader);
-        if (contentType.isValid()) {
-            const QString urlWithoutQuery = reply->url().scheme() + "://" + reply->url().host() + reply->url().path();
-            if (contentType == "application/json") {
-                const QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-                if (document.isObject()) {
-                    const QJsonObject object = document.object();
-                    const int code = object["code"].toInt(-1);
-                    const QString msg = object["msg"].toString();
-                    if (code == 0) {
-                        const QJsonValue data = object["data"];
-                        if (data.isArray() && urlWithoutQuery == SEARCH_API) {
-                            // It is searching stations
-                            const QUrlQuery searchStringQuery(reply->url());
-                            if (searchStringQuery.hasQueryItem("q")) {   
-                                const QString q = searchStringQuery.queryItemValue("q");
-                                StationSearchApiResponse stationSearchApiResponse;
-                                stationSearchApiResponse.code = code;
-                                stationSearchApiResponse.msg = msg;
-                                for (const QJsonValue station: data.toArray()) {
-                                    if (station.isString()) {
-                                        stationSearchApiResponse.data.append(station.toString());
-                                    }
-                                }
-                                readWriteLock.lockForWrite();
-                                searchedStations.insert(q, &stationSearchApiResponse);
-                                readWriteLock.unlock();
-                            }
-                            else {
-                                qFatal(IONENGINE_WWWNMCCN) << "No search string found in url query.";
-                            }
-                        }
-                        else if (data.isObject() && urlWithoutQuery == WEATHER_API) {
-                            // It is requesting weather api
-                            const QJsonObject dataObject = data.toObject();
-                            WeatherApiResponse response;
-                            response.msg = msg;
-                            response.code = code;
-                            // data.real
-                            const QJsonObject real = dataObject["real"].toObject();
-                            // data.real.station
-                            const QJsonObject realStation = real["station"].toObject();
-                            response.data.real.station.code = realStation["code"].toString();
-                            response.data.real.station.province = realStation["province"].toString();
-                            response.data.real.station.city = realStation["city"].toString();
-                            response.data.real.station.url = realStation["url"].toString();
-                            // data.real.publish_time
-                            response.data.real.publish_time = QDateTime::fromString(real["publish_time"].toString());
-                            // data.real.weather
-                            const QJsonObject realWeather = real["weather"].toObject();
-                            response.data.real.weather.temperature = realWeather["temperature"].toDouble();
-                            response.data.real.weather.temperatureDiff = realWeather["temperatureDiff"].toDouble();
-                            response.data.real.weather.airpressure = realWeather["airpressure"].toInt();
-                            response.data.real.weather.humidity = realWeather["humidity"].toInt();
-                            response.data.real.weather.rain = realWeather["rain"].toDouble();
-                            response.data.real.weather.rcomfort = realWeather["rcomfort"].toInt();
-                            response.data.real.weather.icomfort = realWeather["icomfort"].toInt();
-                            response.data.real.weather.info = realWeather["info"].toString();
-                            response.data.real.weather.img = realWeather["img"].toString();
-                            response.data.real.weather.feelst = realWeather["feelst"].toDouble();
-                            // data.real.wind
-                            const QJsonObject realWind = real["wind"].toObject();
-                            response.data.real.wind.direct = realWind["direct"].toString();
-                            response.data.real.wind.degree = realWind["degree"].toDouble();
-                            response.data.real.wind.power = realWind["power"].toString();
-                            response.data.real.wind.speed = realWind["speed"].toDouble();                            
-                            // data.real.warn
-                            const QJsonObject realWarn = real["warn"].toObject();
-                            response.data.real.warn.alert = realWarn["alert"].toString();
-                            response.data.real.warn.pic = realWarn["pic"].toString();
-                            response.data.real.warn.province = realWarn["province"].toString();
-                            response.data.real.warn.city = realWarn["city"].toString();
-                            response.data.real.warn.url = realWarn["url"].toString();
-                            response.data.real.warn.issuecontent = realWarn["issuecontent"].toString();
-                            response.data.real.warn.fmeans = realWarn["fmeans"].toString();
-                            response.data.real.warn.signaltype = realWarn["signaltype"].toString();
-                            response.data.real.warn.signallevel = realWarn["signallevel"].toString();
-                            response.data.real.warn.pic2 = realWarn["pic2"].toString();
-                            // API does not provide this, faking one.
-                            response.data.real.warn.expireTime = QDate::currentDate().endOfDay();
-                            // data.real.sunriseSunset
-                            const QJsonObject realSunriseSunset = real["sunriseSunset"].toObject();
-                            response.data.real.sunriseSunset.sunrise = QDateTime::fromString(realSunriseSunset["sunrise"].toString());
-                            response.data.real.sunriseSunset.sunset = QDateTime::fromString(realSunriseSunset["sunset"].toString());
-                            // data.predict
-                            const QJsonObject predict = dataObject["predict"].toObject();
-                            // data.predict.station
-                            const QJsonObject predictStation = predict["station"].toObject();
-                            response.data.predict.station.code = predictStation["code"].toString();
-                            response.data.predict.station.province = predictStation["province"].toString();
-                            response.data.predict.station.city = predictStation["city"].toString();
-                            response.data.predict.station.url = predictStation["url"].toString();
-                            // data.predict.publish_time
-                            response.data.predict.publish_time = QDateTime::fromString(predict["publish_time"].toString());
-                            // data.predict.detail
-                            response.data.predict.detail.clear();
-                            for (const QJsonValue detailValue: predict["detail"].toArray()) {
-                                const QJsonObject detailObject = detailValue.toObject();
-
-                                DetailInfo detail;
-                                detail.date = QDate::fromString(detailObject["date"].toString());
-                                detail.pt = QDateTime::fromString(detailObject["pt"].toString());
-                                const QJsonObject detailDay = detailValue["day"].toObject();
-                                const QJsonObject detailDayWeather = detailDay["weather"].toObject();
-                                detail.day.weather.info = detailDayWeather["info"].toString();
-                                detail.day.weather.img = detailDayWeather["img"].toString();
-                                detail.day.weather.temperature = detailDayWeather["temperature"].toDouble();
-                                const QJsonObject detailDayWind = detailDay["wind"].toObject();
-                                detail.day.wind.direct = detailDayWind["direct"].toString();
-                                detail.day.wind.power = detailDayWind["power"].toString();
-                                const QJsonObject detailNight = detailValue["night"].toObject();
-                                const QJsonObject detailNightWeather = detailNight["weather"].toObject();
-                                detail.night.weather.info = detailNightWeather["info"].toString();
-                                detail.night.weather.img = detailNightWeather["img"].toString();
-                                detail.night.weather.temperature = detailNightWeather["temperature"].toDouble();
-                                const QJsonObject detailNightWind = detailNight["wind"].toObject();
-                                detail.night.wind.direct = detailNightWind["direct"].toString();
-                                detail.night.wind.power = detailNightWind["power"].toString();
-                                detail.precipitation = detailObject["precipitation"].toDouble();
-                                response.data.predict.detail.append(detail);
-                            }
-                            // data.air
-                            const QJsonObject air = dataObject["air"].toObject();
-                            response.data.air.forecasttime = QDateTime::fromString(air["forecasttime"].toString());
-                            response.data.air.aqi = air["aqi"].toInt();
-                            response.data.air.aq = air["aq"].toInt();
-                            response.data.air.text = air["text"].toString();
-                            response.data.air.aqiCode = air["aqiCode"].toString();
-                            // data.tempchart
-                            const QJsonArray tempChart = data["tempchart"].toArray();
-                            response.data.tempchart.clear();
-                            for (const QJsonValue tempChartValue: tempChart) {
-                                QJsonObject tempChartObject = tempChartValue.toObject();
-                                TempChartInfo chart;
-                                chart.time = QDate::fromString(tempChartObject["time"].toString());
-                                chart.max_temp = tempChartObject["max_temp"].toDouble();
-                                chart.min_temp = tempChartObject["min_temp"].toDouble();
-                                chart.day_img = tempChartObject["day_img"].toString();
-                                chart.day_text = tempChartObject["day_text"].toString();
-                                chart.night_img = tempChartObject["night_img"].toString();
-                                chart.night_text = tempChartObject["night_text"].toString();
-                                response.data.tempchart.append(chart);
-                            }
-                            readWriteLock.lockForWrite();
-                            weathers.insert(response.data.real.station.code, &response);
-                            readWriteLock.unlock();
-                        }
-                        else {
-                            qFatal(IONENGINE_WWWNMCCN) << "Invalid data type: " << data.type() << " with requesting url " << urlWithoutQuery;
-                        }
-                    }
-                    else {
-                        qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << msg;
-                    } 
-                }
-            }
-            else if (contentType == "text/html" && urlWithoutQuery.startsWith(FORECAST_CITY_PAGE)) {
-                // It is requesting weather webpage
-                const QByteArray data = reply->readAll();
-                const htmlDocPtr doc = htmlReadMemory(data, data.length(), nullptr, nullptr, HTML_PARSE_NOERROR);
-                if (doc != NULL) {
-                    const xmlXPathContextPtr context = xmlXPathNewContext(doc);
-                    if (context != NULL) {
-                        const xmlXPathObjectPtr stationIdElementXPath = xmlXPathEvalExpression((xmlChar *)"//input[@name=\"stationId\"]", context);
-                        const xmlNodePtr stationIdElement = stationIdElementXPath->nodesetval->nodeTab[0];
-                        const QString stationId = ((QString)((char *)xmlGetProp(stationIdElement, (xmlChar *)"value"))).trimmed();
-                        HourlyInfoList hourlyInfos;
-                        qDebug(IONENGINE_WWWNMCCN) << "Found stationId: " << stationId << " from web page.";
-                        xmlFreeNode(stationIdElement);
-                        xmlXPathFreeObject(stationIdElementXPath);
-                        const xmlXPathObjectPtr day0DivElementXPath = xmlXPathEvalExpression((xmlChar *)"//div[@id=\"day0\"]/div[contains(@class, \"hour3\")]", context);
-                        for (int i = 0; i < day0DivElementXPath->nodesetval->nodeNr; i++) {
-                            const xmlNodePtr node = day0DivElementXPath->nodesetval->nodeTab[i];
-                            const QString classProp = (char *)xmlGetProp(node, (xmlChar *)"class");
-                            HourlyInfo hourlyInfo;
-                            // 23:00
-                            hourlyInfo.time = classProp.contains("hbg") ? QDateTime::currentDateTime() : QDateTime::currentDateTime().addDays(1);
-                            const xmlNodePtr timeNode = &(node->children[0]);
-                            const QString timeContent = ((QString)((char *)timeNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found time: " << timeContent;
-                            const QTime time = QTime::fromString(timeContent);
-                            hourlyInfo.time.setTime(time);
-                            // https://image.nmc.cn/assets/img/w/40x40/3/0.png
-                            const xmlNodePtr imgNode = &(node->children[1].children[0]);
-                            const QUrl src = (QString)((char *)xmlGetProp(imgNode, (xmlChar *)"src"));
-                            qDebug(IONENGINE_WWWNMCCN) << "Found img src: " << src;
-                            const QString fileName = src.fileName();
-                            hourlyInfo.img = fileName.left(fileName.lastIndexOf("."));
-                            xmlFreeNode(imgNode);
-                            // -
-                            const xmlNodePtr rainNode = &(node->children[2]);
-                            const QString rainContent = ((QString)((char *)rainNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found rain: " << rainContent;
-                            bool rainOk;
-                            const double rain = rainContent.toDouble(&rainOk);
-                            hourlyInfo.rain = rainOk ? rain: -1; 
-                            xmlFreeNode(rainNode);
-                            // 28.1℃
-                            const xmlNodePtr temperatureNode = &(node->children[3]);
-                            const QString temperatureContent = ((QString)((char *)temperatureNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found temperature: " << temperatureContent;
-                            bool temperatureOk;
-                            const double temperature = temperatureContent.left(fileName.length() - 1).toDouble(&temperatureOk);
-                            hourlyInfo.temperature = temperatureOk ? temperature : -1;
-                            xmlFreeNode(temperatureNode);
-                            // 2.9m/s
-                            const xmlNodePtr windSpeedNode = &(node->children[4]);
-                            const QString windSpeedContent = ((QString)((char *)windSpeedNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found wind speed: " << windSpeedContent;
-                            bool windSpeedOk;
-                            const double windSpeed = windSpeedContent.left(windSpeedContent.length() - 3).toDouble(&windSpeedOk);
-                            hourlyInfo.windSpeed = windSpeedOk ? windSpeed : -1;
-                            xmlFreeNode(windSpeedNode);
-                            // 北风
-                            const xmlNodePtr windDirectNode = &(node->children[5]);
-                            const QString windDirectContent = ((QString)((char *)windDirectNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found wind direct: " << windDirectContent;
-                            hourlyInfo.windDirect = windDirectContent;
-                            xmlFreeNode(windDirectNode);
-                            // 963.7hPa
-                            const xmlNodePtr pressureNode = &(node->children[6]);
-                            const QString pressureContent = ((QString)((char *)pressureNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found pressure: " << pressureContent;
-                            bool pressureOk;
-                            const double pressure = pressureContent.left(pressureContent.length() - 3).toDouble(&pressureOk);
-                            hourlyInfo.pressure = pressureOk ? pressure : -1;
-                            xmlFreeNode(pressureNode);
-                            // 81.1%
-                            const xmlNodePtr humidityNode = &(node->children[7]);
-                            const QString humidityContent = ((QString)((char *)humidityNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found humidity: " << humidityContent;
-                            bool humidityOk;
-                            const double humidity = humidityContent.left(humidityContent.length() - 1).toDouble(&humidityOk);
-                            hourlyInfo.humidity = humidityOk ? humidity : -1;
-                            xmlFreeNode(humidityNode);
-                            // 10.1%
-                            const xmlNodePtr possibilityNode = &(node->children[8]);
-                            const QString possibilityContent = ((QString)((char *)possibilityNode->content)).trimmed();
-                            qDebug(IONENGINE_WWWNMCCN) << "Found possibility:: " << possibilityContent;
-                            bool possibilityOk;
-                            const double possibility = possibilityContent.left(possibilityContent.length() - 1).toDouble(&possibilityOk);
-                            hourlyInfo.possibility = possibilityOk ? possibility : -1;
-                            xmlFreeNode(possibilityNode);
-                            xmlFreeNode(node);
-
-                            hourlyInfos.append(hourlyInfo);
-                        }
-                        xmlXPathFreeObject(day0DivElementXPath);
-                        readWriteLock.lockForWrite();
-                        stationIdMap[reply->url()] = stationId;
-                        hourlyWeathers.insert(stationId, &hourlyInfos);
-                        readWriteLock.unlock();
-                    }
-                    xmlXPathFreeContext(context);
-                }
-                xmlFreeDoc(doc);
-                xmlCleanupParser();
-            }
-            else {
-                qFatal(IONENGINE_WWWNMCCN) << "Unable to handle response type " << contentType << " from url " << urlWithoutQuery;
-            }
-        }
-        else {
-            qFatal(IONENGINE_WWWNMCCN) << "Invalid Content-Type header: " << contentType;
-        }
-    }
-    else if (reply->isFinished()) {
-        qFatal(IONENGINE_WWWNMCCN) << "Request error: " << reply->error();
-    }
-    else {
-        qFatal(IONENGINE_WWWNMCCN) << "Request is not finished.";
-    }
-    reply->deleteLater();
-}
-
-StationSearchApiResponse WwwNmcCnIon::searchPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit)
+QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit)
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
     QNetworkRequest request;
@@ -400,14 +118,10 @@ StationSearchApiResponse WwwNmcCnIon::searchPlacesApi(QNetworkAccessManager &net
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager.get(request);
-    readWriteLock.lockForRead();
-    StationSearchApiResponse response = *searchedStations[searchString];
-    readWriteLock.unlock();
-    return response;
+    return networkAccessManager.get(request);
 }
 
-WeatherApiResponse WwwNmcCnIon::searchWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QUrl &referer)
+QNetworkReply *WwwNmcCnIon::requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer)
 {
     QNetworkRequest request;
     QUrl url = (QString)WEATHER_API;
@@ -417,17 +131,13 @@ WeatherApiResponse WwwNmcCnIon::searchWeatherApi(QNetworkAccessManager &networkA
     url.setQuery(query);
     request.setUrl(url);
     QHttpHeaders headers;
-    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, referer.toString());
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, referer);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager.get(request);
-    readWriteLock.lockForRead();
-    WeatherApiResponse response = *weathers[stationId];
-    readWriteLock.unlock();
-    return response;
+    return networkAccessManager.get(request);
 }
 
-HourlyInfoList WwwNmcCnIon::extractWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage)
+QNetworkReply *WwwNmcCnIon::requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage)
 {
     QNetworkRequest request;
     request.setUrl(webPage);
@@ -435,16 +145,374 @@ HourlyInfoList WwwNmcCnIon::extractWebPage(QNetworkAccessManager &networkAccessM
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
-    QNetworkReply* _ = networkAccessManager.get(request);
-    readWriteLock.lockForRead();
-    HourlyInfoList response = *hourlyWeathers[stationIdMap[webPage]];
-    readWriteLock.unlock();
-    return response;
+    return networkAccessManager.get(request);
+}
+
+template<typename T>
+T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
+{
+    if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+        return callable(reply);
+    }
+    else {
+        qFatal(IONENGINE_WWWNMCCN) << "Request failed with error: " << reply->error();
+    }
+    T ret;
+    return ret;
+}
+
+QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
+{
+    qDebug(IONENGINE_WWWNMCCN) << "Setting searching data based on reply of url: " << reply->url();
+    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll()).object();
+    if (responseObject["code"].toInt(-1) == 0) {
+        return responseObject["data"].toArray();
+    }
+    else {
+        qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+    }
+    QJsonArray ret;
+    return ret;
+}
+
+QJsonObject WwwNmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
+{
+    qDebug(IONENGINE_WWWNMCCN) << "Setting weather api data based on reply of url: " << reply->url();
+    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll()).object();
+    if (responseObject["code"].toInt(-1) == 0) {
+        return responseObject["data"].toObject();
+    }
+    else {
+        qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+    }
+    QJsonObject ret;
+    return ret;
+}
+
+QList<HourlyInfo> WwwNmcCnIon::extractWebPage(QNetworkReply *reply)
+{
+    qDebug(IONENGINE_WWWNMCCN) << "Setting weather api data based on reply of url: " << reply->url();
+    QList<HourlyInfo> ret;
+    const char *url = reply->url().toString().toLocal8Bit().data();
+    const QByteArray pageContent = reply->readAll();
+    const xmlDocPtr pageDoc = htmlReadMemory(pageContent, pageContent.size(), url, nullptr, HTML_PARSE_NOERROR);
+    const xmlXPathContextPtr xPathContext = xmlXPathNewContext(pageDoc);
+    const xmlXPathObjectPtr day0DivElementXPath = xmlXPathEvalExpression((xmlChar *)"//div[@id=\"day0\"]/div[contains(@class, \"hour3\")]", xPathContext);
+    if (day0DivElementXPath->nodesetval->nodeNr >= 9) {
+        bool returnList = true;
+        for (int i=0; i<day0DivElementXPath->nodesetval->nodeNr; i++) {
+            const xmlNodePtr node = day0DivElementXPath->nodesetval->nodeTab[i];
+            const QString classPropValue = (char *)xmlGetProp(node, (xmlChar *)"class");
+            HourlyInfo info;
+
+            // 23:00
+            info.time = classPropValue.contains("hbg") ?
+                        QDateTime::currentDateTime() :
+                        QDateTime::currentDateTime().addDays(1);
+            const xmlNodePtr timeNode = &(node->children[0]);
+            const QString timeContent = ((QString)(char *)timeNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found time in page: " << timeContent;
+            info.time.setTime(QTime::fromString(timeContent));
+            xmlFreeNode(timeNode);
+            if (!info.time.isValid()) {
+                returnList = false;
+                break;
+            }
+            
+            // https://image.nmc.cn/assets/img/w/40x40/3/0.png
+            const xmlNodePtr imgNode = &(node->children[1].children[0]);
+            const QUrl src = (QString)(char *)xmlGetProp(imgNode, (xmlChar *)"src");
+            qDebug(IONENGINE_WWWNMCCN) << "Found img src: " << src;
+            const QString fileName = src.fileName();
+            info.img = fileName.left(fileName.lastIndexOf('.'));
+            xmlFreeNode(imgNode);
+
+            // -
+            // 0.9mm
+            const xmlNodePtr rainNode = &(node->children[2]);
+            const QString rainContent = ((QString)(char *)rainNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found rain: " << rainContent;
+            bool rainOk;
+            info.rain = rainContent == "-" ? 0 : rainContent.left(rainContent.length() - 2).toDouble(&rainOk);
+            xmlFreeNode(rainNode);
+            if (rainContent != "-" && !rainOk) {
+                returnList = false;
+                break;
+            }
+
+            // 28.1℃
+            const xmlNodePtr temperatureNode = &(node->children[3]);
+            const QString temperatureContent = ((QString)(char *)temperatureNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found temperature: " << temperatureContent;
+            bool temperatureOk;
+            info.temperature = temperatureContent.left(temperatureContent.length() - 1).toDouble(&temperatureOk);
+            xmlFreeNode(temperatureNode);
+            if (!temperatureOk) {
+                returnList = false;
+                break;
+            }
+
+            // 2.9m/s
+            const xmlNodePtr windSpeedNode = &(node->children[4]);
+            const QString windSpeedContent = ((QString)(char *)windSpeedNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found wind speed: " << windSpeedContent;
+            bool windSpeedOk;
+            info.windSpeed = windSpeedContent.left(windSpeedContent.length() - 3).toDouble(&windSpeedOk);
+            xmlFreeNode(windSpeedNode);
+            if (!windSpeedOk) {
+                returnList = false;
+                break;
+            }
+
+            // 北风
+            const xmlNodePtr windDirectNode = &(node->children[5]);
+            const QString windDirectContent = ((QString)(char *)windDirectNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found wind direct: " << windDirectContent;
+            info.windDirect = windDirectContent;
+            xmlFreeNode(windDirectNode);
+
+            // 963.7hPa
+            const xmlNodePtr atmosphericPressureNode = &(node->children[6]);
+            const QString atmosphericPressureContent = ((QString)(char *)atmosphericPressureNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found atmospheric pressure: " << atmosphericPressureContent;
+            bool atmosphericPressureOk;
+            info.atmosphericPressure = atmosphericPressureContent.left(atmosphericPressureContent.length() - 3).toDouble(&atmosphericPressureOk);
+            xmlFreeNode(atmosphericPressureNode);
+            if (!atmosphericPressureOk) {
+                returnList = false;
+                break;
+            }
+
+            // 81.1%
+            const xmlNodePtr humidityNode = &(node->children[7]);
+            const QString humidityContent = ((QString)(char *)humidityNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found humidity: " << humidityContent;
+            bool humidityOk;
+            info.humidity = humidityContent.left(humidityContent.length() - 1).toDouble(&humidityOk);
+            xmlFreeNode(humidityNode);
+            if (!humidityOk) {
+                returnList = false;
+                break;
+            }
+
+            // 10.1%
+            const xmlNodePtr possibilityNode = &(node->children[8]);
+            const QString possibilityContent = ((QString)(char *)possibilityNode->content).trimmed();
+            qDebug(IONENGINE_WWWNMCCN) << "Found possibility: " << possibilityContent;
+            bool possibilityOk;
+            info.possibility = possibilityContent.left(possibilityContent.length() - 1).toDouble(&possibilityOk);
+            xmlFreeNode(possibilityNode);
+            if (!possibilityOk) {
+                returnList = false;
+                break;
+            }
+
+            ret.append(info);
+        }
+        if (!returnList) {
+            ret.clear();
+        }
+    }
+    xmlFreeDoc(pageDoc);
+    xmlCleanupParser();
+    return ret;
+}
+
+bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
+{
+    const QString warnObjectAlert = warnObject["alert"].toString().removeIf([](QString i) {return i == INVALID_VALUE_STR;});
+    const QString warnObjectCity = warnObject["city"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectFmeans = warnObject["fmeans"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectIssueContent = warnObject["issuecontent"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectPic = warnObject["pic"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectPic2 = warnObject["pic2"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectProvince = warnObject["province"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectSignalLevel = warnObject["signallevel"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectSignalType = warnObject["signaltype"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const QString warnObjectUrl = warnObject["url"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectCity.isEmpty() && !warnObjectFmeans.isEmpty() &&
+                                 !warnObjectIssueContent.isEmpty() && !warnObjectPic.isEmpty() && !warnObjectPic2.isEmpty() &&
+                                 !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() && !warnObjectSignalType.isEmpty() &&
+                                 !warnObjectUrl.isEmpty();
+    bool warnExists = false;
+    if (!warnInfoCache.contains(stationId)) {
+        QList<WarnInfo> warnInfos;
+        warnInfoCache.insert(stationId, &warnInfos); 
+    }
+    QList<WarnInfo> *warnInfos = warnInfoCache[stationId];
+    const QDateTime now = QDateTime::currentDateTime();
+    for (int i=0; i<warnInfos->count();i++) {
+        const WarnInfo warnInfo = warnInfos->at(i);
+        const QString warnSignalType = warnInfo.warnObject["signaltype"].toString();
+        const QString warnSignalLevel = warnInfo.warnObject["signallevel"].toString();
+        if (now > warnInfo.startTime.date().endOfDay()) {
+            const QString warnDescription = warnSignalType + "-" + warnSignalLevel;
+            qDebug(IONENGINE_WWWNMCCN) << "Removing outdated warn: " << warnDescription;
+                warnInfos->remove(i);
+            }
+        else if (warnSignalType == warnObjectSignalType && warnSignalLevel == warnObjectSignalLevel) {
+            warnExists = true;
+        }
+    }
+    warnInfos->squeeze();
+    if (!warnExists && warnObjectValid) {
+        WarnInfo warn;
+        warn.warnObject = warnObject;
+        warn.startTime = QDateTime::currentDateTime();
+        warnInfos->append(warn);
+        return true;
+    }
+    return false;
 }
 
 #ifdef ION_LEGACY
 
 K_PLUGIN_CLASS_WITH_JSON(WwwNmcCnIon, "metadata.legacy.json");
+
+void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString &source)
+{
+    QJsonArray searchResult = handleNetworkReply(reply,
+                                                 (std::function<QJsonArray(QNetworkReply*)>)extractSearchApiResponse);
+    const int dataCount = searchResult.count();
+    QStringList dataToSet = {
+        ION_NAME,
+        dataCount > 0 ? "valid" : "invalid",
+        dataCount > 1 ? "multiple" : "single",
+    };
+    if (dataCount == 0) {
+        dataToSet += {source.split(sourceSep)[2]};
+    }
+    else {
+        // PlaceInfoString format:
+        // id|city|province|refererPath|lon?|lat?
+        for (const QJsonValue placeInfoString : searchResult) {
+            const QStringList placeInfoStringParts = placeInfoString.toString().split(placeInfoSep);
+            const QStringList extraDataParts = {placeInfoStringParts[0], placeInfoStringParts[3], placeInfoStringParts[4], placeInfoStringParts[5]};
+            dataToSet += {"place", placeInfoStringParts[1] + "-" + placeInfoStringParts[2], "extra", extraDataParts.join(extraDataSep)};
+        }
+    }
+    setData(source, "validate", dataToSet.join(sourceSep));
+}
+
+void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData)
+{
+    QJsonObject apiResponseData = handleNetworkReply(reply,
+                                                    (std::function<QJsonObject(QNetworkReply*)>)extractWeatherApiResponse);
+    if (!apiResponseData.isEmpty()) {
+        data.insert("Credit", ION_NAME);
+        data.insert("Credit Url", creditUrl);
+        data.insert("Country", i18n("China"));
+        const QJsonObject real = apiResponseData["real"].toObject();
+        const QJsonObject station = real["station"].toObject();
+        data.insert("Place", station["city"].toString());
+        data.insert("Region", station["province"].toString());
+        data.insert("Station", station["city"].toString());
+        data.insert("Observation Period", real["publish_time"].toString());
+        const QJsonObject sunriseSunset = real["sunriseSunset"].toObject();
+        const QDateTime sunset = QDateTime::fromString(sunriseSunset["sunset"].toString());
+        const QDateTime publishTime = QDateTime::fromString(real["publish_time"].toString());
+        const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString());
+        const QJsonObject weather = real["weather"].toObject();
+        const QJsonObject wind = real["wind"].toObject();
+        data.insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
+                                                                  sunset <= publishTime && publishTime <= sunrise,
+                                                                  wind["speed"].toDouble() > 0));
+        data.insert("Temperature", weather["temperature"].toDouble());
+        data.insert("Temperature Unit", KUnitConversion::Celsius);
+        data.insert("Windchill", std::round(weather["feelst"].toInt()));
+        data.insert("Humidex", std::round(weather["feelst"].toInt()));
+        data.insert("Wind Direction", wind["direct"].toString());
+        data.insert("Wind Speed", wind["speed"].toDouble());
+        data.insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
+        data.insert("Humidity", weather["humidity"].toInt());
+        data.insert("Pressure", weather["airpressure"].toInt());
+        data.insert("Pressure Unit", KUnitConversion::Hectopascal);
+        data.insert("Sunrise At", sunrise.time());
+        data.insert("Sunset At", sunset.time());
+        const QString forecastRelatedKeyTemplate = "Short Forecast Day %1";
+        const QString forecastRelatedValueTemplate = (QStringList){"%1", "%2", "%3", "%4", "%5", "%6"}.join(sourceSep);
+        const QJsonObject predict = apiResponseData["predict"].toObject();
+        const QJsonArray detail = predict["detail"].toArray();
+        for (int i = 0; i < detail.count(); i++) {
+            const QString forecastRelatedKey = forecastRelatedKeyTemplate.arg(i);
+            const QJsonObject detailObject = detail.at(i).toObject();
+            const QJsonObject day = detailObject["day"].toObject();
+            const QJsonObject dayWeather = day["weather"].toObject();
+            const QJsonObject dayWind = day["wind"].toObject();
+            const bool dayWindy = dayWind["power"].toString() != "无持续风向";
+            const double dayWeatherTemperature = dayWeather["temperature"].toString().toDouble();
+            const QJsonObject night = detailObject["night"].toObject();
+            const QJsonObject nightWeather = night["weather"].toObject();
+            const QJsonObject nightWind = night["wind"].toObject();
+            const bool nightWindy = nightWind["power"].toString() != "无持续风向";
+            const double nightWeatherTemperature = nightWeather["temperature"].toString().toDouble();
+            const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), dayWindy, false));
+            if (i > 0) {
+                const QString dayWeatherForecastRelatedValue =
+                    forecastRelatedValueTemplate
+                        .arg(QDate::fromString(detailObject["date"].toString()).day())
+                        .arg(dayWeatherIcon)
+                        .arg(dayWeather["info"].toString())
+                        .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))
+                        .arg(std::min(dayWeatherTemperature, nightWeatherTemperature))
+                        .arg("N/U");
+                data.insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
+            }
+            else {                
+                const QString dayWeatherForecastRelatedValue =
+                    forecastRelatedValueTemplate
+                        .arg(i18n("Day"))
+                        .arg(dayWeatherIcon)
+                        .arg(dayWeather["info"].toString())
+                        .arg(dayWeatherTemperature)
+                        .arg("N/U")
+                        .arg("N/U");
+                data.insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
+                const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
+                const QString nightWeatherForecastRelatedValue =
+                    forecastRelatedValueTemplate
+                        .arg(i18n("Night"))
+                        .arg(nightWeatherIcon)
+                        .arg(nightWeather["info"].toString())
+                        .arg(nightWeatherTemperature)
+                        .arg("N/U")
+                        .arg("N/U");
+                data.insert(forecastRelatedKey, nightWeatherForecastRelatedValue);
+            }
+        }
+        data.insert("Total Weather Days", detail.count());
+        const QString stationId = station["code"].toString();
+        const QJsonObject warnObject = real["warn"].toObject();
+        updateWarnInfoCache(warnObject, stationId);
+        const QList<WarnInfo> *warnInfos = warnInfoCache[stationId];
+        const QString warningRelatedDescriptionKeyTemplate = "Warning Description %1";
+        const QString warningRelatedInfoKeyTemplate = "Warning Info %1";
+        for (int i=0; i<warnInfos->count(); i++) {
+            const WarnInfo warnInfo = warnInfos->at(i);
+            const QString warningRelatedDescriptionKey = warningRelatedDescriptionKeyTemplate.arg(i);
+            const QString warningRelatedDescriptionValue = warnInfo.warnObject["signaltype"].toString() + "-" + warnInfo.warnObject["signallevel"].toString();
+            data.insert(warningRelatedDescriptionKey, warningRelatedDescriptionValue);
+            const QString warningRelatedInfoKey = warningRelatedInfoKeyTemplate.arg(i);
+            const QString warningRelatedInfoValue = API_BASE + warnInfo.warnObject["url"].toString();
+            data.insert(warningRelatedInfoKey, warningRelatedInfoValue);
+        }
+        data.insert("Total Warnings Issued", warnInfos->count());
+        if (callSetData) {
+            Q_EMIT cleanUpData(source);
+            const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2]};
+            const QString weatherSource = weatherSourceParts.join(sourceSep);
+            qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << weatherSource;
+            setData(weatherSource, data);
+        }
+    }
+}
+
+void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, Plasma5Support::DataEngine::Data &data, const bool callSetData)
+{
+    QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply,
+                                                       (std::function<QList<HourlyInfo>(QNetworkReply*)>)extractWebPage);
+    
+}
 
 bool WwwNmcCnIon::updateIonSource(const QString &source)
 {
@@ -454,178 +522,37 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
     // See also: https://techbase.kde.org/Projects/Plasma/Weather/Ions
     qDebug(IONENGINE_WWWNMCCN) << "Update source: " << source;
     const char extraDataSep = ';';
-    QNetworkAccessManager networkAccessManager(this);
-    connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &WwwNmcCnIon::onNetworkRequestFinished);
     QStringList splitSource = source.split(sourceSep);
     if (splitSource.count() >= 3) {
         const QString requestName = splitSource[1];
         if (requestName == "validate") {
-            StationSearchApiResponse response = searchPlacesApi(networkAccessManager, splitSource[2]);
-            QStringList dataValue = {ION_NAME};
-            if (response.code == 0) {
-                const int stationCount = response.data.count();
-                dataValue += {
-                    stationCount > 0 ? "valid" : "invalid",
-                    stationCount > 1 ? "multiple" : "single",
-                };
-                bool hasResult = false;
-                if (stationCount > 0) {
-                    for (const QString &data : response.data) {
-                        // Search result format:
-                        // id|city|province|refererPath|lon?|lat?
-                        const QStringList splitData = data.split(placeInfoSep);
-                        if (splitData.count() >= 6) {
-                            hasResult = true;
-                            const QStringList extraData = {splitData[0], splitData[3], splitData[4], splitData[5]};
-                            dataValue += {"place", splitData[1] + "-" + splitData[2], "extra", extraData.join(extraDataSep)};
-                        }
-                    }
-                }
-                if (!hasResult) {
-                    dataValue += {splitSource[2]};
-                }
-            }
-            else {
-                qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << response.msg;
-                dataValue += {"invalid", "single", splitSource[2]};
-            }
-            const QString value = dataValue.join(sourceSep);
-            qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request with: " << value;
-            setData(source, "validate", value);
+            QNetworkAccessManager networkAccessManager(this);
+            connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
+                    [=](QNetworkReply *reply) {onSearchApiRequestFinished(reply, source);},
+                    Qt::SingleShotConnection);
+            requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
             return true;
         }
-        else if (requestName == "weather" && splitSource.count() >= 4 && ! splitSource[3].isEmpty()) {
+        else if (requestName == "weather" && splitSource.count() >= 4 && !splitSource[3].isEmpty()) {
+            // splitSource[3] format:
+            // id;refererPath;lon?;lat?
             const QStringList splitExtraData = splitSource[3].split(extraDataSep);
             if (splitExtraData.count() >= 4) {
-                const QString creditPage = API_BASE + splitExtraData[1];
-                HourlyInfoList hourly = extractWebPage(networkAccessManager, creditPage);
-                WeatherApiResponse apiResponse = searchWeatherApi(networkAccessManager, splitExtraData[0], creditPage);
                 qDebug(IONENGINE_WWWNMCCN) << "Responsing weather request...";
+                const QString creditPage = API_BASE + splitExtraData[1];
 
                 Plasma5Support::DataEngine::Data data;
-                if (apiResponse.code == 0 && hourly.count() > 0) {
-                    const QString stationId = apiResponse.data.real.station.code;
-                    data.insert("Credit", "www.nmc.cn");
-                    data.insert("Credit Url", creditPage);
-                    data.insert("Country", i18n("China"));
-                    data.insert("Place", apiResponse.data.real.station.city);
-                    data.insert("Region", apiResponse.data.real.station.province);
-                    data.insert("Station", apiResponse.data.real.station.city);
-                    data.insert("Observation Period", apiResponse.data.real.publish_time);
-                    const bool night = apiResponse.data.real.sunriseSunset.sunset <= apiResponse.data.real.publish_time &&
-                                       apiResponse.data.real.publish_time <= apiResponse.data.real.sunriseSunset.sunrise;
-                    data.insert("Current Conditions", getWeatherConditionIcon(apiResponse.data.real.weather.img,
-                                                                              apiResponse.data.real.wind.speed > 0,
-                                                                              night));
-                    data.insert("Temperature", apiResponse.data.real.weather.temperature);
-                    data.insert("Temperature Unit", KUnitConversion::Celsius);
-                    data.insert("Windchill", std::round(apiResponse.data.real.weather.feelst));
-                    data.insert("Humidex", std::round(apiResponse.data.real.weather.feelst));
-                    data.insert("Wind Direction", apiResponse.data.real.wind.direct);
-                    data.insert("Wind Speed", std::round(apiResponse.data.real.wind.speed));
-                    data.insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
-                    data.insert("Humidity", apiResponse.data.real.weather.humidity);
-                    data.insert("Pressure", apiResponse.data.real.weather.airpressure);
-                    data.insert("Pressure Unit", KUnitConversion::Hectopascal);
-                    data.insert("Sunrise At", apiResponse.data.real.sunriseSunset.sunrise);
-                    data.insert("Sunset At", apiResponse.data.real.sunriseSunset.sunset);
-                    const QString forecastRelatedKeyTemplate = "Short Forecast Day %1";
-                    const QStringList forecastRelatedValueTemplates = {"%1", "%2", "%3", "%4", "%5", "%6"};
-                    const QString forecastRelatedValueTemplate = forecastRelatedValueTemplates.join(sourceSep);
-                    for (int i = 0; i < apiResponse.data.predict.detail.count(); i++) {
-                        const QString forecastRelatedKey = forecastRelatedKeyTemplate.arg(i);
-                        const DetailInfo detail = apiResponse.data.predict.detail.at(i);
-                        if (i > 0) {
-                            const QString forecastRelatedValue = forecastRelatedValueTemplate.arg(detail.date.day())
-                                                               .arg(getWeatherIcon(getWeatherConditionIcon(detail.day.weather.img, detail.day.wind.power != "无持续风向", false)))
-                                                               .arg(detail.day.weather.info)
-                                                               .arg(std::max(detail.day.weather.temperature, detail.night.weather.temperature))
-                                                               .arg(std::min(detail.day.weather.temperature, detail.night.weather.temperature))
-                                                               .arg("N/U");
-                            data.insert(forecastRelatedKey, forecastRelatedValue);
-                        }
-                        else {
-                            const QString forecastRelatedValueDay = forecastRelatedValueTemplate.arg(i18n("Day"))
-                                                                  .arg(getWeatherIcon(getWeatherConditionIcon(detail.day.weather.img, detail.day.wind.direct != "无持续风向", false)))
-                                                                  .arg(detail.day.weather.info)
-                                                                  .arg(detail.day.weather.temperature)
-                                                                  .arg("N/U")
-                                                                  .arg("N/U");
-                            data.insert(forecastRelatedKey, forecastRelatedValueDay);
-                            const QString forecastRelatedValueNight = forecastRelatedValueTemplate.arg(i18n("Night"))
-                                                                    .arg(getWeatherIcon(getWeatherConditionIcon(detail.night.weather.img, detail.night.wind.direct != "无持续风向", true)))
-                                                                    .arg(detail.night.weather.info)
-                                                                    .arg(detail.night.weather.temperature)
-                                                                    .arg("N/U")
-                                                                    .arg("N/U");
-                            data.insert(forecastRelatedKey, forecastRelatedValueNight);
-                        }
-                    }
-                    data.insert("Total Weather Days", apiResponse.data.predict.detail.count());
-                    const QDateTime now = QDateTime::currentDateTime();
-                    WarnInfoList *warns = activeWarnings[stationId];
-                    for (int i=0; i<warns->count(); i++) {
-                        const WarnInfo warn = warns->at(i);
-                        if (now > warn.expireTime) {
-                            qDebug(IONENGINE_WWWNMCCN) << "Removing outdated warning: " << warn.signaltype << "-" << warn.signallevel;
-                            warns->remove(i);
-                        }
-                    }
-                    warns->squeeze();
-                    const QString weatherWarningRelatedDescriptionKeyTemplate = "Warning Description %1";
-                    const QString weatherWarningRelatedInfoKeyTemplate = "Warning Info %1";
-                    const bool warnValid = !apiResponse.data.real.warn.alert.isEmpty() &&
-                                           apiResponse.data.real.warn.alert != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.city.isEmpty() &&
-                                           apiResponse.data.real.warn.city != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.fmeans.isEmpty() &&
-                                           apiResponse.data.real.warn.fmeans != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.issuecontent.isEmpty() &&
-                                           apiResponse.data.real.warn.issuecontent != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.pic.isEmpty() &&
-                                           apiResponse.data.real.warn.pic != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.pic2.isEmpty() &&
-                                           apiResponse.data.real.warn.pic2 != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.province.isEmpty() &&
-                                           apiResponse.data.real.warn.province != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.signallevel.isEmpty() &&
-                                           apiResponse.data.real.warn.signallevel != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.signaltype.isEmpty() &&
-                                           apiResponse.data.real.warn.signaltype != INVALID_VALUE_STR &&
-                                           !apiResponse.data.real.warn.url.isEmpty() &&
-                                           apiResponse.data.real.warn.url != INVALID_VALUE_STR &&
-                                           apiResponse.data.real.warn.expireTime.isValid() &&
-                                           apiResponse.data.real.warn.expireTime > now;
-                    if (warnValid) {
-                        warns->append(apiResponse.data.real.warn);
-                    }
-                    qDebug(IONENGINE_WWWNMCCN) << "Adding " << activeWarnings.count() << " warnings...";
-                    for (int i = 0;i < warns->count(); i++) {
-                        const WarnInfo warn = warns->at(i);
-                        const QString weatherWarningRelatedDescriptionKey = weatherWarningRelatedDescriptionKeyTemplate.arg(i);
-                        const QString weatherWarningRelatedInfoKey = weatherWarningRelatedInfoKeyTemplate.arg(i);
-                        const QString weatherWarningRelatedInfoValue = API_BASE + warn.url;
-                        const QString weatherWarningRelatedDescriptionValue = warn.signaltype + "-" + warn.signallevel;
-                        data.insert(weatherWarningRelatedDescriptionKey, weatherWarningRelatedDescriptionValue);
-                        data.insert(weatherWarningRelatedInfoKey, weatherWarningRelatedInfoValue);
-                    }
-                    data.insert("Total Warnings Issued", activeWarnings.count());
-                }
-                else if (apiResponse.code == 0) {
-                    qFatal(IONENGINE_WWWNMCCN) << "Failed to get hourly report from webpage.";
-                    data.insert("Place", i18n("N/A"));
-                }
-                else {
-                    qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << apiResponse.msg;
-                    data.insert("Place", i18n("N/A"));
-                }
-
-                Q_EMIT cleanUpData(source);
-                QStringList weatherSourceValues = {ION_NAME, "weather", splitSource[2]};
-                const QString weatherSource = weatherSourceValues.join(sourceSep);
-                qDebug(IONENGINE_WWWNMCCN) << "Responsing weather source: " << weatherSource;
-                qDebug(IONENGINE_WWWNMCCN) << "Response data: " << data;
-                setData(weatherSource, data);
+                QNetworkAccessManager networkAccessManager(this);
+                /*
+                connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
+                        [&](QNetworkReply *reply) {onWebPageRequestFinished(reply, source, data, false);},
+                        Qt::SingleShotConnection);
+                requestWebPage(networkAccessManager, creditPage);
+                */
+                connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
+                        [&](QNetworkReply *reply) {onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
+                        Qt::SingleShotConnection);
+                requestWeatherApi(networkAccessManager, splitExtraData[0], creditPage);
                 return true;
             }
         }
@@ -639,13 +566,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
 
 void WwwNmcCnIon::reset()
 {
-    readWriteLock.lockForWrite();
-    activeWarnings.clear();
-    weathers.clear();
-    hourlyWeathers.clear();
-    searchedStations.clear();
-    stationIdMap.clear();
-    readWriteLock.unlock();
+    warnInfoCache.clear();
 }
 #else // ION_LEGACY
 
