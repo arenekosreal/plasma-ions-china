@@ -64,7 +64,7 @@ private:
     QNetworkReply *requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
     QNetworkReply *requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer);
     QNetworkReply *requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
-    ConditionIcons getWeatherConditionIcon(const QString &img, bool windy, bool night) const;
+    ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
     static QJsonArray extractSearchApiResponse(QNetworkReply *reply);
     static QJsonObject extractWeatherApiResponse(QNetworkReply *reply);

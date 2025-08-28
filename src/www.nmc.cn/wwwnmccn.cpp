@@ -28,7 +28,7 @@ WwwNmcCnIon::~WwwNmcCnIon()
     reset();
 }
 
-WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &img, bool windy, bool night) const
+WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
 {
     bool ok;
     const int imgId = img.toInt(&ok);
