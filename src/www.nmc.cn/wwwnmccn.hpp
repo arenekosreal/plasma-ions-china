@@ -62,6 +62,7 @@ private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
     QCache<QString, QList<WarnInfo>> warnInfoCache;
+    QNetworkAccessManager networkAccessManager;
 
     QNetworkReply *requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
     QNetworkReply *requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer);

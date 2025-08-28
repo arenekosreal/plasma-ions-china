@@ -20,6 +20,7 @@
 WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
     : IonInterface(parent)
 {
+    networkAccessManager.setParent(this);
     setInitialized(true);
 }
 
@@ -525,7 +526,6 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         const QString requestName = splitSource[1];
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
-            QNetworkAccessManager networkAccessManager(this);
             connect(&networkAccessManager, &QNetworkAccessManager::finished,
                     this, [&](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
             requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
@@ -540,7 +540,6 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 const QString creditPage = API_BASE + splitExtraData[1];
 
                 Plasma5Support::DataEngine::Data data;
-                QNetworkAccessManager networkAccessManager(this);
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [&](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
