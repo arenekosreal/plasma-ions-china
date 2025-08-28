@@ -526,8 +526,8 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             QNetworkAccessManager networkAccessManager(this);
-            connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                    [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
+            connect(&networkAccessManager, &QNetworkAccessManager::finished,
+                    this, [&](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
             requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
             return true;
         }
