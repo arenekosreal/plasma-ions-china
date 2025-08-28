@@ -320,16 +320,17 @@ QList<HourlyInfo> WwwNmcCnIon::extractWebPage(QNetworkReply *reply)
 
 bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
 {
-    const QString warnObjectAlert = warnObject["alert"].toString().removeIf([](QString i) {return i == INVALID_VALUE_STR;});
-    const QString warnObjectCity = warnObject["city"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectFmeans = warnObject["fmeans"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectIssueContent = warnObject["issuecontent"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectPic = warnObject["pic"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectPic2 = warnObject["pic2"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectProvince = warnObject["province"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectSignalLevel = warnObject["signallevel"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectSignalType = warnObject["signaltype"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
-    const QString warnObjectUrl = warnObject["url"].toString().removeIf([](QString i){return i == INVALID_VALUE_STR;});
+    std::function<bool(QString)> invalidChecker = [&](QString i){return i == (QString)INVALID_VALUE_STR;};
+    const QString warnObjectAlert = warnObject["alert"].toString().removeIf(invalidChecker);
+    const QString warnObjectCity = warnObject["city"].toString().removeIf(invalidChecker);
+    const QString warnObjectFmeans = warnObject["fmeans"].toString().removeIf(invalidChecker);
+    const QString warnObjectIssueContent = warnObject["issuecontent"].toString().removeIf(invalidChecker);
+    const QString warnObjectPic = warnObject["pic"].toString().removeIf(invalidChecker);
+    const QString warnObjectPic2 = warnObject["pic2"].toString().removeIf(invalidChecker);
+    const QString warnObjectProvince = warnObject["province"].toString().removeIf(invalidChecker);
+    const QString warnObjectSignalLevel = warnObject["signallevel"].toString().removeIf(invalidChecker);
+    const QString warnObjectSignalType = warnObject["signaltype"].toString().removeIf(invalidChecker);
+    const QString warnObjectUrl = warnObject["url"].toString().removeIf(invalidChecker);
     const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectCity.isEmpty() && !warnObjectFmeans.isEmpty() &&
                                  !warnObjectIssueContent.isEmpty() && !warnObjectPic.isEmpty() && !warnObjectPic2.isEmpty() &&
                                  !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() && !warnObjectSignalType.isEmpty() &&
