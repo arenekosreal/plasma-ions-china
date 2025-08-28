@@ -66,11 +66,11 @@ private:
     QNetworkReply *requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
-    static QJsonArray extractSearchApiResponse(QNetworkReply *reply);
-    static QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
-    static QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
+    QJsonArray extractSearchApiResponse(QNetworkReply *reply);
+    QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
+    QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
     template<typename T>
-    static T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable);
+    T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable);
 
 #ifdef ION_LEGACY
 private:

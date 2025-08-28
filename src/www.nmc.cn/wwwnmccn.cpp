@@ -373,8 +373,8 @@ K_PLUGIN_CLASS_WITH_JSON(WwwNmcCnIon, "metadata.legacy.json");
 
 void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString &source)
 {
-    QJsonArray searchResult = handleNetworkReply(reply,
-                                                 (std::function<QJsonArray(QNetworkReply*)>)extractSearchApiResponse);
+    std::function<QJsonArray(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractSearchApiResponse(r);};
+    QJsonArray searchResult = handleNetworkReply(reply, wrapper);
     const int dataCount = searchResult.count();
     QStringList dataToSet = {
         ION_NAME,
@@ -398,8 +398,8 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
 
 void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData)
 {
-    QJsonObject apiResponseData = handleNetworkReply(reply,
-                                                    (std::function<QJsonObject(QNetworkReply*)>)extractWeatherApiResponse);
+    std::function<QJsonObject(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWeatherApiResponse(r);};
+    QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
     if (!apiResponseData.isEmpty()) {
         data.insert("Credit", ION_NAME);
         data.insert("Credit Url", creditUrl);
@@ -511,8 +511,8 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
 
 void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, Plasma5Support::DataEngine::Data &data, const bool callSetData)
 {
-    QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply,
-                                                       (std::function<QList<HourlyInfo>(QNetworkReply*)>)extractWebPage);
+    std::function<QList<HourlyInfo>(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWebPage(r);};
+    QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply, wrapper);
     
 }
 
