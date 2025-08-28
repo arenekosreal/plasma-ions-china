@@ -13,7 +13,6 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 #include <libxml/tree.h>
-#include <qnamespace.h>
 
 #include "wwwnmccn.hpp"
 
@@ -104,7 +103,7 @@ WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &
     }
 }
 
-QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit)
+QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
     QNetworkRequest request;
@@ -125,7 +124,7 @@ QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(QNetworkAccessManager &net
     return networkAccessManager.get(request);
 }
 
-QNetworkReply *WwwNmcCnIon::requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer)
+QNetworkReply *WwwNmcCnIon::requestWeatherApi(const QString &stationId, const QString &referer)
 {
     QNetworkRequest request;
     QUrl url(WEATHER_API);
@@ -141,7 +140,7 @@ QNetworkReply *WwwNmcCnIon::requestWeatherApi(QNetworkAccessManager &networkAcce
     return networkAccessManager.get(request);
 }
 
-QNetworkReply *WwwNmcCnIon::requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage)
+QNetworkReply *WwwNmcCnIon::requestWebPage(const QUrl &webPage)
 {
     QNetworkRequest request;
     request.setUrl(webPage);
@@ -528,7 +527,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             connect(&networkAccessManager, &QNetworkAccessManager::finished,
                     this, [&](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
-            requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
+            requestSearchingPlacesApi(splitSource[2]);
             return true;
         }
         else if (requestName == "weather" && splitSource.count() >= 4 && !splitSource[3].isEmpty()) {
@@ -544,12 +543,12 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [&](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
                         Qt::SingleShotConnection);
-                requestWebPage(networkAccessManager, creditPage);
+                requestWebPage(creditPage);
                 */
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [&](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
                         Qt::SingleShotConnection);
-                requestWeatherApi(networkAccessManager, splitExtraData[0], creditPage);
+                requestWeatherApi(splitExtraData[0], creditPage);
                 return true;
             }
         }

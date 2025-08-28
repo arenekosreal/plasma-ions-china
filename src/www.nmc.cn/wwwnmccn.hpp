@@ -64,9 +64,9 @@ private:
     QCache<QString, QList<WarnInfo>> warnInfoCache;
     QNetworkAccessManager networkAccessManager;
 
-    QNetworkReply *requestSearchingPlacesApi(QNetworkAccessManager &networkAccessManager, const QString &searchString, const int searchLimit = 10);
-    QNetworkReply *requestWeatherApi(QNetworkAccessManager &networkAccessManager, const QString &stationId, const QString &referer);
-    QNetworkReply *requestWebPage(QNetworkAccessManager &networkAccessManager, const QUrl &webPage);
+    QNetworkReply *requestSearchingPlacesApi(const QString &searchString, const int searchLimit = 10);
+    QNetworkReply *requestWeatherApi(const QString &stationId, const QString &referer);
+    QNetworkReply *requestWebPage(const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
     QJsonArray extractSearchApiResponse(QNetworkReply *reply);
