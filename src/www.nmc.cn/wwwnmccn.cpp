@@ -516,7 +516,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         if (requestName == "validate") {
             QNetworkAccessManager networkAccessManager(this);
             connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                    [=](QNetworkReply *reply) {onSearchApiRequestFinished(reply, source);},
+                    [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);},
                     Qt::SingleShotConnection);
             requestSearchingPlacesApi(networkAccessManager, splitSource[2]);
             return true;
@@ -533,12 +533,12 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 QNetworkAccessManager networkAccessManager(this);
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [&](QNetworkReply *reply) {onWebPageRequestFinished(reply, source, data, false);},
+                        [&](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
                         Qt::SingleShotConnection);
                 requestWebPage(networkAccessManager, creditPage);
                 */
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [&](QNetworkReply *reply) {onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
+                        [&](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
                         Qt::SingleShotConnection);
                 requestWeatherApi(networkAccessManager, splitExtraData[0], creditPage);
                 return true;
