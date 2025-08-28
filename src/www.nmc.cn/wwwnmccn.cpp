@@ -320,7 +320,7 @@ QList<HourlyInfo> WwwNmcCnIon::extractWebPage(QNetworkReply *reply)
 
 bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
 {
-    std::function<bool(QString)> invalidChecker = [&](QString i){return i == (QString)INVALID_VALUE_STR;};
+    std::function<bool(QString)> invalidChecker = [](QString i){return i == (QString)INVALID_VALUE_STR;};
     const QString warnObjectAlert = warnObject["alert"].toString().removeIf(invalidChecker);
     const QString warnObjectCity = warnObject["city"].toString().removeIf(invalidChecker);
     const QString warnObjectFmeans = warnObject["fmeans"].toString().removeIf(invalidChecker);
