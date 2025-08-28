@@ -15,7 +15,6 @@
 #include <libxml/tree.h>
 
 #include "wwwnmccn.hpp"
-#include "wwwnmccn_debug.hpp"
 
 WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
     : IonInterface(parent)
@@ -147,19 +146,6 @@ QNetworkReply *WwwNmcCnIon::requestWebPage(QNetworkAccessManager &networkAccessM
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
     request.setHeaders(headers);
     return networkAccessManager.get(request);
-}
-
-template<typename T>
-T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
-{
-    if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
-        return callable(reply);
-    }
-    else {
-        qFatal(IONENGINE_WWWNMCCN) << "Request failed with error: " << reply->error();
-    }
-    T ret;
-    return ret;
 }
 
 QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)

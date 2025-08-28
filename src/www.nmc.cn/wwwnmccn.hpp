@@ -6,6 +6,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
+#include "wwwnmccn_debug.hpp"
+
 #ifdef ION_LEGACY
 #include <ion.h>
 #else
@@ -70,7 +72,17 @@ private:
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
     QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
     template<typename T>
-    T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable);
+    T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
+    {
+        if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+            return callable(reply);
+        }
+        else {
+            qFatal(IONENGINE_WWWNMCCN) << "Request failed with error: " << reply->error();
+        }
+        T ret;
+        return ret;
+    };
 
 #ifdef ION_LEGACY
 private:
