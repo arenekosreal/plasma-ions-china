@@ -4,6 +4,7 @@
 #include <KLocalizedString>
 #include <QDateTime>
 #include <QHttpHeaders>
+#include <QJsonParseError>
 #include <QJsonValue>
 #include <QNetworkRequest>
 #include <QRegularExpression>
@@ -154,12 +155,15 @@ QNetworkReply *WwwNmcCnIon::requestWebPage(const QUrl &webPage)
 QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
 {
     qDebug(IONENGINE_WWWNMCCN) << "Setting searching data based on reply of url: " << reply->url();
-    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll()).object();
-    if (responseObject["code"].toInt(-1) == 0) {
-        return responseObject["data"].toArray();
-    }
-    else {
-        qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+    QJsonParseError error;
+    const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll(), &error).object();
+    switch (responseObject["code"].toInt(-1)) {
+        case 0:
+            return responseObject["data"].toArray();
+        case -1:
+            qFatal(IONENGINE_WWWNMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+        default:
+            qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
     }
     QJsonArray ret;
     return ret;
