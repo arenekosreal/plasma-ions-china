@@ -72,7 +72,7 @@ private:
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
     QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
     template<typename T>
-    T handleNetworkReply(const QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
+    T handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
     {
         if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
             return callable(reply);
