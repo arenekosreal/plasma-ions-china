@@ -394,7 +394,7 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
         }
     }
     const QString dataStringToSet = dataToSet.join(sourceSep);
-    qDebug(IONENGINE_WWWNMCCN) << "Setting data:" << dataStringToSet;
+    qDebug(IONENGINE_WWWNMCCN) << "Setting data:" << dataStringToSet << "for source:" << source;
     setData(source, "validate", dataStringToSet);
 }
 
