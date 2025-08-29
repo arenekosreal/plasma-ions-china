@@ -91,8 +91,8 @@ private:
     const char sourceSep = '|';
     // Slots
     void onSearchApiRequestFinished(QNetworkReply *reply, const QString &source);
-    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData);
-    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, Plasma5Support::DataEngine::Data &data, const bool callSetData);
+    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData);
+    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData);
 
 // IonInterface API
 protected:

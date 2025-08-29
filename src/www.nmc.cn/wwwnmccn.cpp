@@ -398,42 +398,42 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
     setData(source, "validate", dataStringToSet);
 }
 
-void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, Plasma5Support::DataEngine::Data &data, const bool callSetData)
+void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData)
 {
     std::function<QJsonObject(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWeatherApiResponse(r);};
     QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
     qDebug(IONENGINE_WWWNMCCN) << "Deserialized data json object:" << apiResponseData;
     if (!apiResponseData.isEmpty()) {
-        data.insert("Credit", ION_NAME);
-        data.insert("Credit Url", creditUrl);
-        data.insert("Country", i18n("China"));
+        data->insert("Credit", ION_NAME);
+        data->insert("Credit Url", creditUrl);
+        data->insert("Country", i18n("China"));
         const QJsonObject real = apiResponseData["real"].toObject();
         const QJsonObject station = real["station"].toObject();
-        data.insert("Place", station["city"].toString());
-        data.insert("Region", station["province"].toString());
-        data.insert("Station", station["city"].toString());
-        data.insert("Observation Period", real["publish_time"].toString());
+        data->insert("Place", station["city"].toString());
+        data->insert("Region", station["province"].toString());
+        data->insert("Station", station["city"].toString());
+        data->insert("Observation Period", real["publish_time"].toString());
         const QJsonObject sunriseSunset = real["sunriseSunset"].toObject();
         const QDateTime sunset = QDateTime::fromString(sunriseSunset["sunset"].toString());
         const QDateTime publishTime = QDateTime::fromString(real["publish_time"].toString());
         const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString());
         const QJsonObject weather = real["weather"].toObject();
         const QJsonObject wind = real["wind"].toObject();
-        data.insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
+        data->insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
                                                                   sunset <= publishTime && publishTime <= sunrise,
                                                                   wind["speed"].toDouble() > 0));
-        data.insert("Temperature", weather["temperature"].toDouble());
-        data.insert("Temperature Unit", KUnitConversion::Celsius);
-        data.insert("Windchill", std::round(weather["feelst"].toInt()));
-        data.insert("Humidex", std::round(weather["feelst"].toInt()));
-        data.insert("Wind Direction", wind["direct"].toString());
-        data.insert("Wind Speed", wind["speed"].toDouble());
-        data.insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
-        data.insert("Humidity", weather["humidity"].toInt());
-        data.insert("Pressure", weather["airpressure"].toInt());
-        data.insert("Pressure Unit", KUnitConversion::Hectopascal);
-        data.insert("Sunrise At", sunrise.time());
-        data.insert("Sunset At", sunset.time());
+        data->insert("Temperature", weather["temperature"].toDouble());
+        data->insert("Temperature Unit", KUnitConversion::Celsius);
+        data->insert("Windchill", std::round(weather["feelst"].toInt()));
+        data->insert("Humidex", std::round(weather["feelst"].toInt()));
+        data->insert("Wind Direction", wind["direct"].toString());
+        data->insert("Wind Speed", wind["speed"].toDouble());
+        data->insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
+        data->insert("Humidity", weather["humidity"].toInt());
+        data->insert("Pressure", weather["airpressure"].toInt());
+        data->insert("Pressure Unit", KUnitConversion::Hectopascal);
+        data->insert("Sunrise At", sunrise.time());
+        data->insert("Sunset At", sunset.time());
         const QString forecastRelatedKeyTemplate = "Short Forecast Day %1";
         const QString forecastRelatedValueTemplate = (QStringList){"%1", "%2", "%3", "%4", "%5", "%6"}.join(sourceSep);
         const QJsonObject predict = apiResponseData["predict"].toObject();
@@ -461,7 +461,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                         .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))
                         .arg(std::min(dayWeatherTemperature, nightWeatherTemperature))
                         .arg("N/U");
-                data.insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
+                data->insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
             }
             else {                
                 const QString dayWeatherForecastRelatedValue =
@@ -472,7 +472,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                         .arg(dayWeatherTemperature)
                         .arg("N/U")
                         .arg("N/U");
-                data.insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
+                data->insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
                 const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
                 const QString nightWeatherForecastRelatedValue =
                     forecastRelatedValueTemplate
@@ -482,10 +482,10 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                         .arg(nightWeatherTemperature)
                         .arg("N/U")
                         .arg("N/U");
-                data.insert(forecastRelatedKey, nightWeatherForecastRelatedValue);
+                data->insert(forecastRelatedKey, nightWeatherForecastRelatedValue);
             }
         }
-        data.insert("Total Weather Days", detail.count());
+        data->insert("Total Weather Days", detail.count());
         const QString stationId = station["code"].toString();
         const QJsonObject warnObject = real["warn"].toObject();
         updateWarnInfoCache(warnObject, stationId);
@@ -496,23 +496,23 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             const WarnInfo warnInfo = warnInfos->at(i);
             const QString warningRelatedDescriptionKey = warningRelatedDescriptionKeyTemplate.arg(i);
             const QString warningRelatedDescriptionValue = warnInfo.warnObject["signaltype"].toString() + "-" + warnInfo.warnObject["signallevel"].toString();
-            data.insert(warningRelatedDescriptionKey, warningRelatedDescriptionValue);
+            data->insert(warningRelatedDescriptionKey, warningRelatedDescriptionValue);
             const QString warningRelatedInfoKey = warningRelatedInfoKeyTemplate.arg(i);
             const QString warningRelatedInfoValue = API_BASE + warnInfo.warnObject["url"].toString();
-            data.insert(warningRelatedInfoKey, warningRelatedInfoValue);
+            data->insert(warningRelatedInfoKey, warningRelatedInfoValue);
         }
-        data.insert("Total Warnings Issued", warnInfos->count());
+        data->insert("Total Warnings Issued", warnInfos->count());
         if (callSetData) {
             Q_EMIT cleanUpData(source);
             const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2]};
             const QString weatherSource = weatherSourceParts.join(sourceSep);
             qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << weatherSource;
-            setData(weatherSource, data);
+            setData(weatherSource, *data);
         }
     }
 }
 
-void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, Plasma5Support::DataEngine::Data &data, const bool callSetData)
+void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData)
 {
     std::function<QList<HourlyInfo>(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWebPage(r);};
     QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply, wrapper);
@@ -545,7 +545,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 qDebug(IONENGINE_WWWNMCCN) << "Responsing weather request...";
                 const QString creditPage = API_BASE + splitExtraData[1];
 
-                Plasma5Support::DataEngine::Data data;
+                std::shared_ptr<Plasma5Support::DataEngine::Data> data = std::make_shared<Plasma5Support::DataEngine::Data>();
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [=, &data](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
