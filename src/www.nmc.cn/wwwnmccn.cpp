@@ -540,11 +540,12 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
     QStringList splitSource = source.split(sourceSep);
     if (splitSource.count() >= 3) {
         const QString requestName = splitSource[1];
+        const Qt::ConnectionType networkAccessManagerSlotConnectionType = (Qt::ConnectionType)(Qt::AutoConnection | Qt::SingleShotConnection);
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             connect(&networkAccessManager, &QNetworkAccessManager::finished,
                     this, [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);},
-                    Qt::SingleShotConnection);
+                    networkAccessManagerSlotConnectionType);
             requestSearchingPlacesApi(splitSource[2]);
             return true;
         }
@@ -559,12 +560,12 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [=](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, false);},
-                        Qt::SingleShotConnection);
+                        networkAccessManagerSlotConnectionType);
                 requestWebPage(creditPage);
                 */
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
                         [=](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, true);},
-                        Qt::SingleShotConnection);
+                        networkAccessManagerSlotConnectionType);
                 requestWeatherApi(splitExtraData[0], creditPage);
                 return true;
             }
