@@ -555,7 +555,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
             const QStringList splitExtraData = splitSource[3].split(extraDataSep);
             if (splitExtraData.count() >= 4) {
                 qDebug(IONENGINE_WWWNMCCN) << "Responsing weather request...";
-                const QString creditPage = API_BASE + splitExtraData[1];
+                const QString creditPage = FORECAST_CITY_PAGE + splitExtraData[1];
 
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,

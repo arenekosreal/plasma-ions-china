@@ -27,7 +27,7 @@ typedef Ion IonInterface
 // Referer: FORECAST_PAGE
 // URL Params: q; limit; timestamp; _;
 #define SEARCH_API API_BASE "/essearch/api/autocomplete"
-// Referer: FORECAST_CITY_PAGE
+// Referer: FORECAST_CITY_PAGE + "/xxx/xxxxxxxxx.html"
 // URL Params: stationid; _;
 // Hourly weather data is hardcoded in FORECAST_CITY_PAGE.
 #define WEATHER_API API_BASE "/rest/weather"
