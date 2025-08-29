@@ -533,7 +533,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             connect(&networkAccessManager, &QNetworkAccessManager::finished,
-                    this, [&](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
+                    this, [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
             requestSearchingPlacesApi(splitSource[2]);
             return true;
         }
@@ -548,12 +548,12 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 Plasma5Support::DataEngine::Data data;
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [&](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
+                        [=, &data](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
                         Qt::SingleShotConnection);
                 requestWebPage(creditPage);
                 */
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [&](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
+                        [=, &data](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
                         Qt::SingleShotConnection);
                 requestWeatherApi(splitExtraData[0], creditPage);
                 return true;
