@@ -120,6 +120,7 @@ QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(const QString &searchStrin
     QHttpHeaders headers;
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::ContentType, "application/json;charset=utf-8");
     request.setHeaders(headers);
     qDebug(IONENGINE_WWWNMCCN) << "Requesting headers:" << headers;
     return networkAccessManager.get(request);
@@ -137,6 +138,7 @@ QNetworkReply *WwwNmcCnIon::requestWeatherApi(const QString &stationId, const QS
     QHttpHeaders headers;
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, referer);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::ContentType, "application/json;charset=utf-8");
     request.setHeaders(headers);
     return networkAccessManager.get(request);
 }
@@ -148,6 +150,7 @@ QNetworkReply *WwwNmcCnIon::requestWebPage(const QUrl &webPage)
     QHttpHeaders headers;
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, FORECAST_PAGE);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, USER_AGENT);
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::ContentType, "text/html;charset=utf-8");
     request.setHeaders(headers);
     return networkAccessManager.get(request);
 }
