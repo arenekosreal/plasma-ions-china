@@ -517,6 +517,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             const QString weatherSource = weatherSourceParts.join(sourceSep);
             qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << weatherSource;
             setData(weatherSource, *data);
+            dataCache.remove(source);
         }
     }
 }
