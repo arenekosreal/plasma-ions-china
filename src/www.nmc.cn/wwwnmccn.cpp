@@ -341,8 +341,8 @@ bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QStri
                                  !warnObjectUrl.isEmpty();
     bool warnExists = false;
     if (!warnInfoCache.contains(stationId)) {
-        QList<WarnInfo> warnInfos;
-        warnInfoCache.insert(stationId, &warnInfos); 
+        QList<WarnInfo> *warnInfos = new QList<WarnInfo>;
+        warnInfoCache.insert(stationId, warnInfos); 
     }
     QList<WarnInfo> *warnInfos = warnInfoCache[stationId];
     const QDateTime now = QDateTime::currentDateTime();
