@@ -409,8 +409,8 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
     qDebug(IONENGINE_WWWNMCCN) << "Deserialized data json object:" << apiResponseData;
     if (!apiResponseData.isEmpty()) {
         if (!dataCache.contains(source)) {
-            Plasma5Support::DataEngine::Data data;
-            dataCache.insert(source, &data);
+            Plasma5Support::DataEngine::Data emptyData;
+            dataCache.insert(source, &emptyData);
         }
         Plasma5Support::DataEngine::Data *data = dataCache[source];
         data->insert("Credit", ION_NAME);
