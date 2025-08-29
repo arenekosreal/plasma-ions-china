@@ -89,10 +89,11 @@ private:
 #ifdef ION_LEGACY
 private:
     const char sourceSep = '|';
+    QCache<QString, Plasma5Support::DataEngine::Data> dataCache;
     // Slots
     void onSearchApiRequestFinished(QNetworkReply *reply, const QString &source);
-    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData);
-    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData);
+    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData);
+    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, const bool callSetData);
 
 // IonInterface API
 protected:

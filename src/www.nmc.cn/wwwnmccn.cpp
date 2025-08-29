@@ -26,7 +26,11 @@ WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
 
 WwwNmcCnIon::~WwwNmcCnIon()
 {
+#ifdef ION_LEGACY
     reset();
+#else // ION_LEGACY
+    warnInfoCache.clear();
+#endif // ION_LEGACY
 }
 
 WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
@@ -398,12 +402,17 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
     setData(source, "validate", dataStringToSet);
 }
 
-void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData)
+void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData)
 {
     std::function<QJsonObject(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWeatherApiResponse(r);};
     QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
     qDebug(IONENGINE_WWWNMCCN) << "Deserialized data json object:" << apiResponseData;
     if (!apiResponseData.isEmpty()) {
+        if (!dataCache.contains(source)) {
+            Plasma5Support::DataEngine::Data data;
+            dataCache.insert(source, &data);
+        }
+        Plasma5Support::DataEngine::Data *data = dataCache[source];
         data->insert("Credit", ION_NAME);
         data->insert("Credit Url", creditUrl);
         data->insert("Country", i18n("China"));
@@ -512,7 +521,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
     }
 }
 
-void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, std::shared_ptr<Plasma5Support::DataEngine::Data> &data, const bool callSetData)
+void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, const bool callSetData)
 {
     std::function<QList<HourlyInfo>(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWebPage(r);};
     QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply, wrapper);
@@ -533,7 +542,8 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
         if (requestName == "validate") {
             qDebug(IONENGINE_WWWNMCCN) << "Responsing validate request...";
             connect(&networkAccessManager, &QNetworkAccessManager::finished,
-                    this, [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);});
+                    this, [=](QNetworkReply *reply) {this->onSearchApiRequestFinished(reply, source);},
+                    Qt::SingleShotConnection);
             requestSearchingPlacesApi(splitSource[2]);
             return true;
         }
@@ -545,15 +555,14 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
                 qDebug(IONENGINE_WWWNMCCN) << "Responsing weather request...";
                 const QString creditPage = API_BASE + splitExtraData[1];
 
-                std::shared_ptr<Plasma5Support::DataEngine::Data> data = std::make_shared<Plasma5Support::DataEngine::Data>();
                 /*
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [=, &data](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, data, false);},
+                        [=](QNetworkReply *reply) {this->onWebPageRequestFinished(reply, source, false);},
                         Qt::SingleShotConnection);
                 requestWebPage(creditPage);
                 */
                 connect(&networkAccessManager, &QNetworkAccessManager::finished, this,
-                        [=, &data](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, data, true);},
+                        [=](QNetworkReply *reply) {this->onWeatherApiRequestFinished(reply, source, creditPage, true);},
                         Qt::SingleShotConnection);
                 requestWeatherApi(splitExtraData[0], creditPage);
                 return true;
@@ -570,6 +579,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
 void WwwNmcCnIon::reset()
 {
     warnInfoCache.clear();
+    dataCache.clear();
 }
 #else // ION_LEGACY
 
