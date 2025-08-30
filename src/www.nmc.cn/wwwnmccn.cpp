@@ -515,8 +515,8 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             Q_EMIT cleanUpData(source);
             const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2], source.split(sourceSep)[3]};
             const QString weatherSource = weatherSourceParts.join(sourceSep);
-            qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << weatherSource;
-            setData(weatherSource, *data);
+            qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << source;
+            setData(source, *data);
             dataCache.remove(source);
         }
     }
