@@ -477,7 +477,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             dataCache.insert(source, emptyData);
         }
         Plasma5Support::DataEngine::Data *data = dataCache[source];
-        data->insert("Credit", ION_NAME);
+        data->insert("Credit", i18n("National Meteorological Center"));
         data->insert("Credit Url", creditUrl);
         data->insert("Country", i18n("China"));
         const QJsonObject real = apiResponseData["real"].toObject();
