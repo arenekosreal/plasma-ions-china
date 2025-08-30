@@ -400,6 +400,7 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
     const QString dataStringToSet = dataToSet.join(sourceSep);
     qDebug(IONENGINE_WWWNMCCN) << "Setting data:" << dataStringToSet << "for source:" << source;
     setData(source, "validate", dataStringToSet);
+    reply->deleteLater();
 }
 
 void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData)
@@ -513,19 +514,19 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Total Warnings Issued", warnInfos->count());
         if (callSetData) {
             Q_EMIT cleanUpData(source);
-            const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2], source.split(sourceSep)[3]};
-            const QString weatherSource = weatherSourceParts.join(sourceSep);
             qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << source;
             setData(source, *data);
             dataCache.remove(source);
         }
     }
+    reply->deleteLater();
 }
 
 void WwwNmcCnIon::onWebPageRequestFinished(QNetworkReply *reply, const QString &source, const bool callSetData)
 {
     std::function<QList<HourlyInfo>(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWebPage(r);};
     QList<HourlyInfo> hourlyInfos = handleNetworkReply(reply, wrapper);
+    reply->deleteLater();
     
 }
 
