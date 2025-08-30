@@ -6,7 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-#include "wwwnmccn_debug.hpp"
+#include "nmccn_debug.hpp"
 
 #ifdef ION_LEGACY
 #include <ion.h>
@@ -69,22 +69,20 @@ private:
 
     QNetworkReply *requestSearchingPlacesApi(const QString &searchString, const int searchLimit = 10);
     QNetworkReply *requestWeatherApi(const QString &stationId, const QString &referer);
-    QNetworkReply *requestWebPage(const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
     QString getWindDirectionString(const float degree) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
     QJsonArray extractSearchApiResponse(QNetworkReply *reply);
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
-    QList<HourlyInfo> extractWebPage(QNetworkReply *reply);
     template<typename T>
     T handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
     {
         if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
-            qDebug(IONENGINE_WWWNMCCN) << "Request successfully.";
+            qDebug(IONENGINE_NMCCN) << "Request successfully.";
             return callable(reply);
         }
         else {
-            qFatal(IONENGINE_WWWNMCCN) << "Request failed with error: " << reply->error();
+            qFatal(IONENGINE_NMCCN) << "Request failed with error: " << reply->error();
         }
         T ret;
         return ret;

@@ -1,11 +1,11 @@
 {
-    "KPlugin": {
-        "Description": "www.nmc.cn",
-        "Description[zh_CN]": "www.nmc.cn",
-        "Icon": "noneyet",
-        "Name": "www.nmc.cn",
-        "Name[zh_CN]": "www.nmc.cn"
-    },
-    "Comment": "Current weather status is provided by 3 hours.",
-    "Quality": -1
+  "KPlugin": {
+    "Description": "JSON data from National Meteorological Center of China",
+    "Description[zh_CN]": "中国国家气象中心提供的 JSON 数据",
+    "Icon": "noneyet",
+    "Name": "National Meteorological Center of China",
+    "Name[zh_CN]": "中国国家气象中心"
+  },
+  "Comment": "Reverse engineered, no usability guaranteed.",
+  "Quality": -1
 }

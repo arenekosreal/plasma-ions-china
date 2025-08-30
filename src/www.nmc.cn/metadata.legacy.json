@@ -1,10 +1,10 @@
 {
-    "KPlugin": {
-        "Description": "www.nmc.cn",
-        "Description[zh_CN]": "www.nmc.cn",
-        "Icon": "noneyet",
-        "Name": "www.nmc.cn",
-        "Name[zh_CN]": "www.nmc.cn"
-    },
-    "X-KDE-ParentApp": "weatherengine"
+  "KPlugin": {
+    "Description": "JSON data from National Meteorological Center of China",
+    "Description[zh_CN]": "中国国家气象中心提供的 JSON 数据",
+    "Icon": "noneyet",
+    "Name": "National Meteorological Center of China",
+    "Name[zh_CN]": "中国国家气象中心"
+  },
+  "X-KDE-ParentApp": "weatherengine"
 }
