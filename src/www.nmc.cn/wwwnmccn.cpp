@@ -513,7 +513,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Total Warnings Issued", warnInfos->count());
         if (callSetData) {
             Q_EMIT cleanUpData(source);
-            const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2]};
+            const QStringList weatherSourceParts = {ION_NAME, "weather", source.split(sourceSep)[2], source.split(sourceSep)[3]};
             const QString weatherSource = weatherSourceParts.join(sourceSep);
             qDebug(IONENGINE_WWWNMCCN) << "Responding source: " << weatherSource;
             setData(weatherSource, *data);
