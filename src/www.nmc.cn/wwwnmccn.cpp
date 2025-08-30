@@ -216,7 +216,7 @@ QList<HourlyInfo> WwwNmcCnIon::extractWebPage(QNetworkReply *reply)
             const xmlNodePtr timeNode = &(node->children[0]);
             const QString timeContent = ((QString)(char *)timeNode->content).trimmed();
             qDebug(IONENGINE_WWWNMCCN) << "Found time in page: " << timeContent;
-            info.time.setTime(QTime::fromString(timeContent));
+            info.time.setTime(QTime::fromString(timeContent, realTimeFormat));
             xmlFreeNode(timeNode);
             if (!info.time.isValid()) {
                 returnList = false;
@@ -423,9 +423,9 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Station", station["city"].toString());
         data->insert("Observation Period", real["publish_time"].toString());
         const QJsonObject sunriseSunset = real["sunriseSunset"].toObject();
-        const QDateTime sunset = QDateTime::fromString(sunriseSunset["sunset"].toString());
-        const QDateTime publishTime = QDateTime::fromString(real["publish_time"].toString());
-        const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString());
+        const QDateTime sunset = QDateTime::fromString(sunriseSunset["sunset"].toString(), realDateTimeFormat);
+        const QDateTime publishTime = QDateTime::fromString(real["publish_time"].toString(), realDateTimeFormat);
+        const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString(), realDateTimeFormat);
         const QJsonObject weather = real["weather"].toObject();
         const QJsonObject wind = real["wind"].toObject();
         data->insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
@@ -433,8 +433,8 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                                                                   wind["speed"].toDouble() > 0));
         data->insert("Temperature", weather["temperature"].toDouble());
         data->insert("Temperature Unit", KUnitConversion::Celsius);
-        data->insert("Windchill", std::round(weather["feelst"].toInt()));
-        data->insert("Humidex", std::round(weather["feelst"].toInt()));
+        data->insert("Windchill", std::round(weather["feelst"].toDouble()));
+        data->insert("Humidex", std::round(weather["feelst"].toDouble()));
         data->insert("Wind Direction", wind["direct"].toString());
         data->insert("Wind Speed", wind["speed"].toDouble());
         data->insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
@@ -464,7 +464,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             if (i > 0) {
                 const QString dayWeatherForecastRelatedValue =
                     forecastRelatedValueTemplate
-                        .arg(QDate::fromString(detailObject["date"].toString()).day())
+                        .arg(QDate::fromString(detailObject["date"].toString(), realDateFormat).day())
                         .arg(dayWeatherIcon)
                         .arg(dayWeather["info"].toString())
                         .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))

@@ -61,6 +61,9 @@ public:
 private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
+    const QString realDateFormat = "yyyy-MM-dd";
+    const QString realTimeFormat = "HH:mm";
+    const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
     QCache<QString, QList<WarnInfo>> warnInfoCache;
     QNetworkAccessManager networkAccessManager;
 
