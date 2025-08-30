@@ -71,6 +71,7 @@ private:
     QNetworkReply *requestWeatherApi(const QString &stationId, const QString &referer);
     QNetworkReply *requestWebPage(const QUrl &webPage);
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
+    QString getWindDirectionString(const float degree) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
     QJsonArray extractSearchApiResponse(QNetworkReply *reply);
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);

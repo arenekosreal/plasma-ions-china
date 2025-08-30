@@ -108,6 +108,65 @@ WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &
     }
 }
 
+QString WwwNmcCnIon::getWindDirectionString(const float degree) const
+{
+    if (degree <= 11.25 && degree > 0) {
+        return "N";
+    }
+    else if (degree <= 33.75 && degree > 11.25) {
+        return "NNE";
+    }
+    else if (degree <= 56.25 && degree > 33.75) {
+        return "NE";
+    }
+    else if (degree <= 78.75 && degree > 56.25) {
+        return "ENE";
+    }
+    else if (degree <= 101.25 && degree > 78.75) {
+        return "E";
+    }
+    else if (degree <= 123.75 && degree > 101.25) {
+        return "ESE";
+    }
+    else if (degree <= 146.25 && degree > 123.75) {
+        return "SE";
+    }
+    else if (degree <= 168.75 && degree > 146.25) {
+        return "SSE";
+    }
+    else if (degree <= 191.25 && degree > 168.75) {
+        return "S";
+    }
+    else if (degree <= 213.75 && degree > 191.25) {
+        return "SSW";
+    }
+    else if (degree <= 236.25 && degree > 213.75) {
+        return "SW";
+    }
+    else if (degree <= 258.75 && degree > 236.25) {
+        return "WSW";
+    }
+    else if (degree <= 281.25 && degree > 258.75) {
+        return "W";
+    }
+    else if (degree <= 303.75 && degree > 281.25) {
+        return "WNW";
+    }
+    else if (degree <= 326.25 && degree > 303.75) {
+        return "NW";
+    }
+    else if (degree <= 348.75 && degree > 326.25) {
+        return "NNW";
+    }
+    else if (degree <= 360 && degree > 348.75) {
+        return "N";
+    }
+    else {
+        qFatal(IONENGINE_WWWNMCCN) << "Invalid degree: " << degree;
+        return "VR";
+    }
+}
+
 QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
@@ -440,7 +499,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Temperature Unit", KUnitConversion::Celsius);
         data->insert("Windchill", std::round(weather["feelst"].toDouble()));
         data->insert("Humidex", std::round(weather["feelst"].toDouble()));
-        data->insert("Wind Direction", wind["degree"].toDouble());
+        data->insert("Wind Direction", getWindDirectionString(wind["degree"].toDouble()));
         data->insert("Wind Speed", wind["speed"].toDouble());
         data->insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
         data->insert("Humidity", weather["humidity"].toInt());
