@@ -440,7 +440,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Temperature Unit", KUnitConversion::Celsius);
         data->insert("Windchill", std::round(weather["feelst"].toDouble()));
         data->insert("Humidex", std::round(weather["feelst"].toDouble()));
-        data->insert("Wind Direction", wind["direct"].toString());
+        data->insert("Wind Direction", wind["degree"].toDouble());
         data->insert("Wind Speed", wind["speed"].toDouble());
         data->insert("Wind Speed Unit", KUnitConversion::MeterPerSecond);
         data->insert("Humidity", weather["humidity"].toInt());
