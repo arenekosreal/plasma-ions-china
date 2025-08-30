@@ -169,8 +169,10 @@ QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
             return responseObject["data"].toArray();
         case -1:
             qFatal(IONENGINE_WWWNMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+            break;
         default:
             qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+            break;
     }
     QJsonArray ret;
     return ret;
@@ -186,8 +188,10 @@ QJsonObject WwwNmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
             return responseObject["data"].toObject();
         case -1:
             qFatal(IONENGINE_WWWNMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+            break;
         default:
             qFatal(IONENGINE_WWWNMCCN) << "API response invalid: " << responseObject["msg"].toString();
+            break;
     }
     QJsonObject ret;
     return ret;
