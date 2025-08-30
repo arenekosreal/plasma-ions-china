@@ -39,16 +39,28 @@ include(KDECMakeSettings)
 include(KDEClangFormat)
 include(KDEGitCommitHooks)
 
+find_package(Gettext REQUIRED)
 find_package(PlasmaWeatherIon REQUIRED)
 find_package(KF${QT_MAJOR_VERSION} REQUIRED COMPONENTS UnitConversion I18n)
+set(TRANSLATION_DOMAIN "plasma_ions_china")
+add_compile_definitions(-DTRANSLATION_DOMAIN=\"${TRANSLATION_DOMAIN}\")
 if(PlasmaWeatherIon_LEGACY)
     add_compile_definitions(-DION_LEGACY)
-    add_compile_definitions(-DTRANSLATION_DOMAIN=\"plasma_engine_weather\")
+    add_compile_definitions(-DKDE_WEATHER_TRANSLATION_DOMAIN=\"plasma_engine_weather\")
 else()
     find_package(KF${QT_MAJOR_VERSION} REQUIRED COMPONENTS CoreAddons)
     set(ION_INSTALL_NAMESPACE "plasma/weather_ions")
-    add_compile_definitions(-DTRANSLATION_DOMAIN=\"plasma_applet_org.kde.plasma.weather\")
+    add_compile_definitions(-DKDE_WEATHER_TRANSLATION_DOMAIN=\"plasma_applet_org.kde.plasma.weather\")
 endif()
+set(LANGUAGES zh_CN)
+foreach (_LANGUAGE IN LISTS LANGUAGES)
+    file(COPY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/po/${_LANGUAGE}/${TRANSLATION_DOMAIN}.po"
+                   "${CMAKE_CURRENT_BINARY_DIR}/${_LANGUAGE}.po")
+endforeach()
+gettext_process_pot_file("${CMAKE_CURRENT_SOURCE_DIR}/po/${TRANSLATION_DOMAIN}.pot"
+                         ALL
+                         INSTALL_DESTINATION "${KDE_INSTALL_LOCALEDIR}"
+                         LANGUAGES ${LANGUAGES})
 
 add_subdirectory("src")
 add_subdirectory("tests")

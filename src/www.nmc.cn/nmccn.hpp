@@ -32,19 +32,6 @@ typedef Ion IonInterface
 // Hourly weather data is hardcoded in FORECAST_CITY_PAGE.
 #define WEATHER_API API_BASE "/rest/weather"
 
-struct HourlyInfo
-{
-    QDateTime time;
-    QString img;
-    double rain;
-    double temperature;
-    double windSpeed;
-    QString windDirect;
-    double atmosphericPressure;
-    double humidity;
-    double possibility;
-};
-
 struct WarnInfo
 {
     QDateTime startTime;

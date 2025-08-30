@@ -332,9 +332,9 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             dataCache.insert(source, emptyData);
         }
         Plasma5Support::DataEngine::Data *data = dataCache[source];
-        data->insert("Credit", i18n("National Meteorological Center"));
+        data->insert("Credit", i18n("Source: National Meteorological Center of China"));
         data->insert("Credit Url", creditUrl);
-        data->insert("Country", i18n("China"));
+        data->insert("Country", i18n( "China"));
         const QJsonObject real = apiResponseData["real"].toObject();
         const QJsonObject station = real["station"].toObject();
         data->insert("Place", station["city"].toString());
@@ -394,7 +394,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             else {                
                 const QString dayWeatherForecastRelatedValue =
                     forecastRelatedValueTemplate
-                        .arg(i18n("Day"))
+                        .arg(i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Today", "Today"))
                         .arg(dayWeatherIcon)
                         .arg(dayWeather["info"].toString())
                         .arg(dayWeatherTemperature)
@@ -404,7 +404,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                 const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
                 const QString nightWeatherForecastRelatedValue =
                     forecastRelatedValueTemplate
-                        .arg(i18n("Night"))
+                        .arg(i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Tonight", "Tonight"))
                         .arg(nightWeatherIcon)
                         .arg(nightWeather["info"].toString())
                         .arg(nightWeatherTemperature)
