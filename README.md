@@ -80,7 +80,12 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
    Then create `CMakeLists.txt` to define tests.
    After that, modify [./tests/CMakeLists.txt](./tests/CMakeLists.txt) by adding a new instruction `add_subdirectory("name-of-the-directory")`.
 
-8. Debugging tips
+8. Update readme and translation template
+
+   You need to update [ions](#ions) table to add information about your ion.
+   Translation template can get updated by using commands like `xgettext -o ./po/plasma_ions_china.pot -d plasma_ions_china ...`. 
+
+### Debugging tips
 
    For legacy ion, if you just want to test if your ion is working, you can use `plasmaengineexplorer` in `plasma-sdk` to test it.
 
@@ -88,8 +93,3 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
 
    Setting `QT_LOGGING_RULES=${LOGGING_CATEGORY}.debug=true` will make those programs print debug output of your ion.
    `${LOGGING_CATEGORY}` is the `CATEGORY_NAME` when you call `ecm_qt_declare_logging_category`.
-
-9. Update readme and translation template
-
-   You need to update [ions](#ions) table to add information about your ion.
-   Translation template can get updated by using commands like `xgettext -o ./po/plasma_ions_china.pot -d plasma_ions_china ...`. 
