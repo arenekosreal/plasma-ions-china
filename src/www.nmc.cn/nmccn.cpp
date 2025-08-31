@@ -281,9 +281,16 @@ bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QStri
     if (!warnExists && warnObjectValid) {
         WarnInfo warn;
         warn.warnObject = warnObject;
-        warn.startTime = QDateTime::currentDateTime();
+        warn.startTime = now;
         warnInfos->append(warn);
+        qDebug(IONENGINE_NMCCN) << "Adding" << warnObject["signaltype"].toString() + "-" + warnObject["signallevel"].toString() << "to cache.";
         return true;
+    }
+    else if (warnExists) {
+        qDebug(IONENGINE_NMCCN) << "Found existing warn info, skip adding to cache.";
+    }
+    else if (!warnObjectValid) {
+        qDebug(IONENGINE_NMCCN) << "Warn object" << warnObject << "is not a valid one, skip adding to cache.";
     }
     return false;
 }
