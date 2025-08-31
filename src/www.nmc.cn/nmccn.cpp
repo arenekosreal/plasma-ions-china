@@ -244,19 +244,14 @@ bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QStri
 {
     QRegularExpression invalidValueRegex("^" INVALID_VALUE_STR "$");
     const QString warnObjectAlert = warnObject["alert"].toString().remove(invalidValueRegex);
-    const QString warnObjectCity = warnObject["city"].toString().remove(invalidValueRegex);
-    const QString warnObjectFmeans = warnObject["fmeans"].toString().remove(invalidValueRegex);
     const QString warnObjectIssueContent = warnObject["issuecontent"].toString().remove(invalidValueRegex);
-    const QString warnObjectPic = warnObject["pic"].toString().remove(invalidValueRegex);
-    const QString warnObjectPic2 = warnObject["pic2"].toString().remove(invalidValueRegex);
     const QString warnObjectProvince = warnObject["province"].toString().remove(invalidValueRegex);
     const QString warnObjectSignalLevel = warnObject["signallevel"].toString().remove(invalidValueRegex);
     const QString warnObjectSignalType = warnObject["signaltype"].toString().remove(invalidValueRegex);
     const QString warnObjectUrl = warnObject["url"].toString().remove(invalidValueRegex);
-    const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectCity.isEmpty() && !warnObjectFmeans.isEmpty() &&
-                                 !warnObjectIssueContent.isEmpty() && !warnObjectPic.isEmpty() && !warnObjectPic2.isEmpty() &&
-                                 !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() && !warnObjectSignalType.isEmpty() &&
-                                 !warnObjectUrl.isEmpty();
+    const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectIssueContent.isEmpty() &&
+                                 !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() &&
+                                 !warnObjectSignalType.isEmpty() && !warnObjectUrl.isEmpty();
     bool warnExists = false;
     if (!warnInfoCache.contains(stationId)) {
         QList<WarnInfo> *warnInfos = new QList<WarnInfo>;
