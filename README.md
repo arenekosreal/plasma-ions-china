@@ -6,13 +6,11 @@ A collection of ions for Chinese users.
 
 You should be able to search Chinese cities and obtain weather report in KDE's weather widget after installed this.
 
-## Installation
-
 1. Install [dependencies](#dependencies)
-2. Build and install the project:
+2. Clone this repository using git or downloading archive
+3. Build and install the project:
 
    ```bash
-   git clone https://github.com/arenekosreal/plasma-ions-china
    cmake -B build -S "/path/to/plasma-ions-china"
    cmake --build  build
    cmake --install build
@@ -20,7 +18,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    It is strongly recommended that you should create a package for your Linux Distribution.
    Because you do not want to mix files managed by package manager and yourself.
 
-3. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
+4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
 
    For just experiencing, you can run `plasmoidviewer -a org.kde.plasma.weather` after you installed `plasma-sdk`.
 
@@ -35,16 +33,17 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 ## Ions
 
-|Name|Source|Reverse Engineered|Comment|
-|----|------|------------------|-------|
-|nmccn|[./src/www.nmc.cn](./src/www.nmc.cn)|Y|APIs are scratched from Dev Tools of Chromium.|
+|Name|Reverse Engineered|Comment|
+|----|------------------|-------|
+|[nmccn](./src/www.nmc.cn)|Y|APIs are scratched from Dev Tools of Chromium.|
 
 ## Adding new ion
 
-You can always see source code of `plasma-workspace` or `kdeplasma-addons` or other ion in this project for more info.
+Here are some steps and tips about adding new ion yourself.
+But do not forget you can always see source code of `plasma-workspace` or `kdeplasma-addons` or other ion in this project for more info.
 
 1. Create a directory under [./src](./src)
-2. Modify [./src/CMakeLists.txt] to add a new `add_subdirectory("name-of-the-directory")`
+2. Modify [./src/CMakeLists.txt](./src/CMakeLists.txt) to add a new instruction `add_subdirectory("name-of-the-directory")`
 3. Create a `CMakeLists.txt` in the directory
 4. Add instructions to let cmake create a new library
 
@@ -70,9 +69,15 @@ You can always see source code of `plasma-workspace` or `kdeplasma-addons` or ot
    For new ion, you need to implement `void IonInterface::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Location>>> promise, const QString &searchString)`
    and `void IonInterface::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)`.
 
+   When you need translate some strings, you can use macro `KDE_WEATHER_TRANSLATION_DOMAIN` with methods like `i18nd` to reuse existing translation from KDE.
+   Our default translation domain is `plasma_ions_china`.
+
 7. Add unit test (Optional)
 
    It is always better if you have unit tests to ensure your ion works well.
+
+   Add a directory with the name same to you created in step 1.
+   Then create `CMakeLists.txt` to define tests.
 
 8. Debugging tips
 
@@ -82,3 +87,8 @@ You can always see source code of `plasma-workspace` or `kdeplasma-addons` or ot
 
    Setting `QT_LOGGING_RULES=${LOGGING_CATEGORY}.debug=true` will make those programs print debug output of your ion.
    `${LOGGING_CATEGORY}` is the `CATEGORY_NAME` when you call `ecm_qt_declare_logging_category`.
+
+9. Update readme and translation template
+
+   You need to update [ions](#ions) table to add information about your ion.
+   Translation template can get updated by using commands like `xgettext -o ./po/plasma_ions_china.pot -d plasma_ions_china ...`. 
