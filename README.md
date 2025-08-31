@@ -20,7 +20,9 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    It is strongly recommended that you should create a package for your Linux Distribution.
    Because you do not want to mix files managed by package manager and yourself.
 
-3. Open KDE's weather widget (org.kde.weather) and search Chinese cities like Beijing, etc.
+3. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
+
+   For just experiencing, you can run `plasmoidviewer -a org.kde.plasma.weather` after you installed `plasma-sdk`.
 
 ### Dependencies
 
