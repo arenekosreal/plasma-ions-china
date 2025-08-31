@@ -413,7 +413,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         for (int i=0; i<warnInfos->count(); i++) {
             const WarnInfo warnInfo = warnInfos->at(i);
             const QString warningRelatedDescriptionKey = warningRelatedDescriptionKeyTemplate.arg(i);
-            const QString warningRelatedDescriptionValue = warnInfo.warnObject["signaltype"].toString() + "-" + warnInfo.warnObject["signallevel"].toString();
+            const QString warningRelatedDescriptionValue = warnInfo.warnObject["alert"].toString();
             data->insert(warningRelatedDescriptionKey, warningRelatedDescriptionValue);
             const QString warningRelatedInfoKey = warningRelatedInfoKeyTemplate.arg(i);
             const QString warningRelatedInfoValue = API_BASE + warnInfo.warnObject["url"].toString();
