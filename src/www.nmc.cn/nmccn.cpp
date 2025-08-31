@@ -345,11 +345,11 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Observation Period", real["publish_time"].toString());
         const QJsonObject sunriseSunset = real["sunriseSunset"].toObject();
         const QDateTime sunset = QDateTime::fromString(sunriseSunset["sunset"].toString(), realDateTimeFormat);
-        const QDateTime publishTime = QDateTime::fromString(real["publish_time"].toString(), realDateTimeFormat);
         const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString(), realDateTimeFormat);
         const QJsonObject weather = real["weather"].toObject();
         const QJsonObject wind = real["wind"].toObject();
-        const bool currentIsNight = sunset <= publishTime || publishTime < sunrise;
+        const QDateTime now = QDateTime::currentDateTime();
+        const bool currentIsNight = sunset <= now || now < sunrise;
         const WwwNmcCnIon::ConditionIcons currentWeatherConditionIcon =
             getWeatherConditionIcon(weather["img"].toString(), wind["speed"].toDouble() > 0, currentIsNight);
         data->insert("Condition Icon", getWeatherIcon(currentWeatherConditionIcon));
