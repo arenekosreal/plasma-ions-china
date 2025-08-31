@@ -301,7 +301,7 @@ bool WwwNmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString 
     const QString dayWindDirect = dayWind["direct"].toString().remove(invalidValueRegex);
     const QString dayWindPower = dayWind["power"].toString().remove(invalidValueRegex);
     const bool dayValid = !dayWeatherInfo.isEmpty() && !dayWeatherImg.isEmpty() && !dayWeatherTemperature.isEmpty() &&
-                          !dayWindDirect.isEmpty() && dayWindPower.isEmpty();
+                          !dayWindDirect.isEmpty() && !dayWindPower.isEmpty();
     if (dayValid) {
         qDebug(IONENGINE_NMCCN) << "Day value" << day << "is valid, adding to cache...";
         QJsonObject *dayCopy = new QJsonObject(day);
