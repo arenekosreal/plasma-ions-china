@@ -290,6 +290,28 @@ bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QStri
     return false;
 }
 
+bool WwwNmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString &stationId)
+{
+    const QRegularExpression invalidValueRegex("^" INVALID_VALUE_STR "$");
+    const QJsonObject dayWeather = day["weather"].toObject();
+    const QString dayWeatherInfo = dayWeather["info"].toString().remove(invalidValueRegex);
+    const QString dayWeatherImg = dayWeather["img"].toString().remove(invalidValueRegex);
+    const QString dayWeatherTemperature = dayWeather["temperature"].toString().remove(invalidValueRegex);
+    const QJsonObject dayWind = day["wind"].toObject();
+    const QString dayWindDirect = dayWind["direct"].toString().remove(invalidValueRegex);
+    const QString dayWindPower = dayWind["power"].toString().remove(invalidValueRegex);
+    const bool dayValid = !dayWeatherInfo.isEmpty() && !dayWeatherImg.isEmpty() && !dayWeatherTemperature.isEmpty() &&
+                          !dayWindDirect.isEmpty() && dayWindPower.isEmpty();
+    if (dayValid) {
+        qDebug(IONENGINE_NMCCN) << "Day value" << day << "is valid, adding to cache...";
+        QJsonObject *dayCopy = new QJsonObject(day);
+        lastValidDayCache.insert(stationId, dayCopy);
+        return true;
+    }
+    qDebug(IONENGINE_NMCCN) << "Day value" << day << "is not valid, skip adding to cache...";
+    return false;
+}
+
 #ifdef ION_LEGACY
 
 K_PLUGIN_CLASS_WITH_JSON(WwwNmcCnIon, "metadata.legacy.json");
@@ -339,6 +361,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         data->insert("Country", i18n( "China"));
         const QJsonObject real = apiResponseData["real"].toObject();
         const QJsonObject station = real["station"].toObject();
+        const QString stationId = station["code"].toString();
         data->insert("Place", station["city"].toString());
         data->insert("Region", station["province"].toString());
         data->insert("Station", station["city"].toString());
@@ -374,7 +397,16 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             const QString forecastRelatedKey = forecastRelatedKeyTemplate.arg(i);
             const QJsonObject detailObject = detail.at(i).toObject();
 
-            const QJsonObject day = detailObject["day"].toObject();
+            QJsonObject day = detailObject["day"].toObject();
+            if (i==0 && !updateLastValidDayCache(day, stationId)) {
+                if (lastValidDayCache.contains(stationId)) {
+                    qWarning(IONENGINE_NMCCN) << "Found invalid day report, using cached value instead...";
+                    day = *lastValidDayCache[stationId];
+                }
+                else {
+                    qWarning(IONENGINE_NMCCN) << "Found invalid day report and no cached value.";
+                }
+            }
             const QJsonObject dayWeather = day["weather"].toObject();
             const QJsonObject dayWind = day["wind"].toObject();
             const bool dayWindy = dayWind["power"].toString() != "无持续风向";
@@ -404,7 +436,6 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             data->insert(forecastRelatedKey, forecastRelatedValue);
         }
         data->insert("Total Weather Days", detail.count());
-        const QString stationId = station["code"].toString();
         const QJsonObject warnObject = real["warn"].toObject();
         updateWarnInfoCache(warnObject, stationId);
         const QList<WarnInfo> *warnInfos = warnInfoCache[stationId];

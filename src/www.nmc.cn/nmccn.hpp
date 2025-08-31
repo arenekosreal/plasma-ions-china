@@ -53,6 +53,7 @@ private:
     const QString realTimeFormat = "HH:mm";
     const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
     QCache<QString, QList<WarnInfo>> warnInfoCache;
+    QCache<QString, QJsonObject> lastValidDayCache;
     QNetworkAccessManager networkAccessManager;
 
     QNetworkReply *requestSearchingPlacesApi(const QString &searchString, const int searchLimit = 10);
@@ -60,6 +61,7 @@ private:
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
     QString getWindDirectionString(const float degree) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
+    bool updateLastValidDayCache(const QJsonObject &day, const QString &stationId);
     QJsonArray extractSearchApiResponse(QNetworkReply *reply);
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
     template<typename T>
