@@ -350,6 +350,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         const bool currentIsNight = sunset <= publishTime || publishTime < sunrise;
         const WwwNmcCnIon::ConditionIcons currentWeatherConditionIcon =
             getWeatherConditionIcon(weather["img"].toString(), wind["speed"].toDouble() > 0, currentIsNight);
+        data->insert("Condition Icon", getWeatherIcon(currentWeatherConditionIcon));
         data->insert("Current Conditions", weather["info"].toString()),
         data->insert("Temperature", weather["temperature"].toDouble());
         data->insert("Temperature Unit", KUnitConversion::Celsius);
