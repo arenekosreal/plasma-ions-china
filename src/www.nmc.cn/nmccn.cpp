@@ -348,9 +348,9 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         const QJsonObject weather = real["weather"].toObject();
         const QJsonObject wind = real["wind"].toObject();
         const bool currentIsNight = sunset <= publishTime || publishTime < sunrise;
-        data->insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
-                                                                  sunset <= publishTime && publishTime <= sunrise,
-                                                                  wind["speed"].toDouble() > 0));
+        const WwwNmcCnIon::ConditionIcons currentWeatherConditionIcon =
+            getWeatherConditionIcon(weather["img"].toString(), wind["speed"].toDouble() > 0, currentIsNight);
+        data->insert("Current Conditions", weather["info"].toString()),
         data->insert("Temperature", weather["temperature"].toDouble());
         data->insert("Temperature Unit", KUnitConversion::Celsius);
         data->insert("Windchill", std::round(weather["feelst"].toDouble()));
