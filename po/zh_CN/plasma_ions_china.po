@@ -19,7 +19,7 @@ msgstr ""
 
 #: src/www.nmc.cn/nmccn.cpp:335
 msgid "Source: National Meteorological Center of China"
-msgstr "数据来源：中国国家气象局"
+msgstr "数据来源：中国国家气象中心"
 
 #: src/www.nmc.cn/nmccn.cpp:337
 msgid "China"
