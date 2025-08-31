@@ -347,6 +347,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         const QDateTime sunrise = QDateTime::fromString(sunriseSunset["sunrise"].toString(), realDateTimeFormat);
         const QJsonObject weather = real["weather"].toObject();
         const QJsonObject wind = real["wind"].toObject();
+        const bool currentIsNight = sunset <= publishTime || publishTime < sunrise;
         data->insert("Current Conditions", getWeatherConditionIcon(weather["img"].toString(),
                                                                   sunset <= publishTime && publishTime <= sunrise,
                                                                   wind["speed"].toDouble() > 0));
@@ -369,49 +370,35 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         for (int i = 0; i < detail.count(); i++) {
             const QString forecastRelatedKey = forecastRelatedKeyTemplate.arg(i);
             const QJsonObject detailObject = detail.at(i).toObject();
+
             const QJsonObject day = detailObject["day"].toObject();
             const QJsonObject dayWeather = day["weather"].toObject();
             const QJsonObject dayWind = day["wind"].toObject();
             const bool dayWindy = dayWind["power"].toString() != "无持续风向";
             const double dayWeatherTemperature = dayWeather["temperature"].toString().toDouble();
+            const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), dayWindy, false));
+
             const QJsonObject night = detailObject["night"].toObject();
             const QJsonObject nightWeather = night["weather"].toObject();
             const QJsonObject nightWind = night["wind"].toObject();
             const bool nightWindy = nightWind["power"].toString() != "无持续风向";
             const double nightWeatherTemperature = nightWeather["temperature"].toString().toDouble();
-            const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), dayWindy, false));
-            if (i > 0) {
-                const QString dayWeatherForecastRelatedValue =
-                    forecastRelatedValueTemplate
-                        .arg(QDate::fromString(detailObject["date"].toString(), realDateFormat).day())
-                        .arg(dayWeatherIcon)
-                        .arg(dayWeather["info"].toString())
-                        .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))
-                        .arg(std::min(dayWeatherTemperature, nightWeatherTemperature))
-                        .arg("N/U");
-                data->insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
-            }
-            else {                
-                const QString dayWeatherForecastRelatedValue =
-                    forecastRelatedValueTemplate
-                        .arg(i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Today", "Today"))
-                        .arg(dayWeatherIcon)
-                        .arg(dayWeather["info"].toString())
-                        .arg(dayWeatherTemperature)
-                        .arg("N/U")
-                        .arg("N/U");
-                data->insert(forecastRelatedKey, dayWeatherForecastRelatedValue);
-                const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
-                const QString nightWeatherForecastRelatedValue =
-                    forecastRelatedValueTemplate
-                        .arg(i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Tonight", "Tonight"))
-                        .arg(nightWeatherIcon)
-                        .arg(nightWeather["info"].toString())
-                        .arg(nightWeatherTemperature)
-                        .arg("N/U")
-                        .arg("N/U");
-                data->insert(forecastRelatedKey, nightWeatherForecastRelatedValue);
-            }
+            const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
+
+            const QString detailTitle =
+                i > 0 ? QDate::fromString(detailObject["date"].toString(), realDateFormat).toString(realMonthDayFormat) :
+                        currentIsNight ? i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Tonight", "Tonight") :
+                                         i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Today", "Today");
+            const QString detailWeatherIcon = currentIsNight ? nightWeatherIcon : dayWeatherIcon;
+            const QString detailWeatherInfo = currentIsNight ? nightWeather["info"].toString() : dayWeather["info"].toString();
+            const QString forecastRelatedValue = forecastRelatedValueTemplate
+                .arg(detailTitle)
+                .arg(detailWeatherIcon)
+                .arg(detailWeatherInfo)
+                .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))
+                .arg(std::min(dayWeatherTemperature, nightWeatherTemperature))
+                .arg("N/U");
+            data->insert(forecastRelatedKey, forecastRelatedValue);
         }
         data->insert("Total Weather Days", detail.count());
         const QString stationId = station["code"].toString();

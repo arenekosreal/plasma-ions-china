@@ -48,7 +48,8 @@ public:
 private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
-    const QString realDateFormat = "yyyy-MM-dd";
+    const QString realMonthDayFormat = "MM-dd";
+    const QString realDateFormat = "yyyy-" + realMonthDayFormat;
     const QString realTimeFormat = "HH:mm";
     const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
     QCache<QString, QList<WarnInfo>> warnInfoCache;
