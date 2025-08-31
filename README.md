@@ -78,6 +78,7 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
 
    Add a directory with the name same to you created in step 1.
    Then create `CMakeLists.txt` to define tests.
+   After that, modify [./tests/CMakeLists.txt](./tests/CMakeLists.txt) by adding a new instruction `add_subdirectory("name-of-the-directory")`.
 
 8. Debugging tips
 
