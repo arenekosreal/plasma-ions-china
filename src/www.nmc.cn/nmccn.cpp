@@ -409,16 +409,17 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                     qWarning(IONENGINE_NMCCN) << "Found invalid day report and no cached value.";
                 }
             }
+            const QStringList notWindyPowerList = {"无风", "软风", "0-1级", "1-2级", "0-2级"};
             const QJsonObject dayWeather = day["weather"].toObject();
             const QJsonObject dayWind = day["wind"].toObject();
-            const bool dayWindy = dayWind["power"].toString() != "无持续风向";
+            const bool dayWindy = !notWindyPowerList.contains(dayWind["power"].toString());
             const double dayWeatherTemperature = dayWeather["temperature"].toString().toDouble();
             const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), dayWindy, false));
 
             const QJsonObject night = detailObject["night"].toObject();
             const QJsonObject nightWeather = night["weather"].toObject();
             const QJsonObject nightWind = night["wind"].toObject();
-            const bool nightWindy = nightWind["power"].toString() != "无持续风向";
+            const bool nightWindy = !notWindyPowerList.contains(nightWind["power"].toString());
             const double nightWeatherTemperature = nightWeather["temperature"].toString().toDouble();
             const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
 
