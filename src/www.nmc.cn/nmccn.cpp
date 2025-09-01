@@ -26,6 +26,8 @@ WwwNmcCnIon::~WwwNmcCnIon()
     reset();
 #else // ION_LEGACY
     warnInfoCache.clear();
+    lastValidDayCache.clear();
+    networkAccessManager.clearAccessCache();
 #endif // ION_LEGACY
 }
 
@@ -507,6 +509,8 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
 void WwwNmcCnIon::reset()
 {
     warnInfoCache.clear();
+    lastValidDayCache.clear();
+    networkAccessManager.clearAccessCache();
     dataCache.clear();
 }
 #else // ION_LEGACY
