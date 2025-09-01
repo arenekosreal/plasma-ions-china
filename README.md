@@ -2,6 +2,16 @@
 
 A collection of ions for Chinese users.
 
+## What is Ion
+
+Ion is KDE's weather source engine, which can provide weather data to its weather widget (org.kde.plasma.weather).
+KDE itself has some Ions, like `wetter.com`, `noaa`, etc. If you have used the weather widget, you will not miss them.
+
+## Why create this
+
+Although KDE itself has some Ions, they are not suitable for Chinese users. Only a few cities can be found and their reports are too brief.
+That's why this project is created. We collect some weather apis focus on Chinese cities so we can have a better experience when using KDE's weather widget.
+
 ## Usage
 
 You should be able to search Chinese cities and obtain weather report in KDE's weather widget after installed this.
@@ -15,7 +25,8 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    cmake --build  build
    cmake --install build
    ```
-   It is strongly recommended that you should create a package for your Linux Distribution.
+   There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
+   So it is strongly recommended that you should create a package for your Linux Distribution.
    Because you do not want to mix files managed by package manager and yourself.
 
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
@@ -24,8 +35,13 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 ### Dependencies
 
+### Runtime dependencies
+
 - qt6-base
 - plasma-workspace < 6.5 OR kdeplasma-addons >= 6.5
+
+### Buildtime extra dependencies
+
 - cmake
 - extra-cmake-modules
 - git (If you want to automatically set project version from git tag)
@@ -63,11 +79,18 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
 
 6. Implement ion interface.
 
-   For legacy ion, you need to implement `void IonInterface::reset()` and `bool IonInterfce::updateIonSource(const QString &source)`.
-   See https://techbase.kde.org/Projects/Plasma/Weather/Ions for more info about source string and how to provide data to consumer.
+   For legacy ion, you need to implement those methods:
 
-   For new ion, you need to implement `void IonInterface::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Location>>> promise, const QString &searchString)`
-   and `void IonInterface::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)`.
+   - `void IonInterface::reset()`
+   - `bool IonInterface::updateIonSource(const QString &source)`.
+
+   See https://techbase.kde.org/Projects/Plasma/Weather/Ions for more info about source string and how to provide data to consumer.
+   See [/usr/include/plasma5support/weather/ion.h](/usr/include/plasma5support/weather/ion.h) for more about `IonInterface`.
+
+   For new ion, you need to implement those methods:
+
+   - `void Ion::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Location>>> promise, const QString &searchString)`
+   - `void Ion::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)`.
 
    When you need translate some strings, you can use macro `KDE_WEATHER_TRANSLATION_DOMAIN` with methods like `i18nd` to reuse existing translation from KDE.
    Our default translation domain is `plasma_ions_china`.
