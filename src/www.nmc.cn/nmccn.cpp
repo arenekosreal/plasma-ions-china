@@ -253,7 +253,6 @@ bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString 
     const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectIssueContent.isEmpty() &&
                                  !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() &&
                                  !warnObjectSignalType.isEmpty() && !warnObjectUrl.isEmpty();
-    bool warnExists = false;
     if (!warnInfoCache.contains(stationId)) {
         QList<WarnInfo> *warnInfos = new QList<WarnInfo>;
         warnInfoCache.insert(stationId, warnInfos); 
@@ -264,30 +263,27 @@ bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString 
         const WarnInfo warnInfo = warnInfos->at(i);
         const QString warnSignalType = warnInfo.warnObject["signaltype"].toString();
         const QString warnSignalLevel = warnInfo.warnObject["signallevel"].toString();
+        const QString warnDescription = warnSignalType + "-" + warnSignalLevel;
         if (now > warnInfo.startTime.date().endOfDay()) {
-            const QString warnDescription = warnSignalType + "-" + warnSignalLevel;
             qDebug(IONENGINE_NMCCN) << "Removing outdated warn:" << warnDescription;
-                warnInfos->remove(i);
-            }
+            warnInfos->remove(i);
+        }
         else if (warnSignalType == warnObjectSignalType && warnSignalLevel == warnObjectSignalLevel) {
-            warnExists = true;
+            qDebug(IONENGINE_NMCCN) << "Removing existing warn:" << warnDescription;
+            warnInfos->remove(i);
         }
     }
     warnInfos->squeeze();
-    if (!warnExists && warnObjectValid) {
+
+    if (warnObjectValid) {
         WarnInfo warn;
         warn.warnObject = warnObject;
         warn.startTime = now;
         warnInfos->append(warn);
-        qDebug(IONENGINE_NMCCN) << "Adding" << warnObject["signaltype"].toString() + "-" + warnObject["signallevel"].toString() << "to cache.";
+        qDebug(IONENGINE_NMCCN) << "Adding" << warnObject << "to cache.";
         return true;
     }
-    else if (warnExists) {
-        qDebug(IONENGINE_NMCCN) << "Found existing warn info, skip adding to cache.";
-    }
-    else if (!warnObjectValid) {
-        qDebug(IONENGINE_NMCCN) << "Warn object" << warnObject << "is not a valid one, skip adding to cache.";
-    }
+    qDebug(IONENGINE_NMCCN) << "Warn object" << warnObject << "is not a valid one, skip adding to cache.";
     return false;
 }
 
