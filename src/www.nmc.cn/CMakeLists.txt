@@ -1,11 +1,15 @@
 set(ION_NAME nmccn)
 if(PlasmaWeatherIon_LEGACY)
     set(TARGET_NAME plasma_engine_${ION_NAME})
+    set(LOGGING_CATEGORY_NAME kde.dataengine.ion.nmccn)
+    set(LOGGING_CATEGORY_DESCRIPTION "DataEngine ion nmccn")
     add_library(${TARGET_NAME} MODULE nmccn.hpp nmccn.cpp)
     install(TARGETS ${TARGET_NAME} DESTINATION "${PLASMA5SUPPORT_DATAENGINES_PLUGINDIR}")
     add_compile_definitions(-DION_NAME=\"${ION_NAME}\")
 else()
     set(TARGET_NAME ${ION_NAME})
+    set(LOGGING_CATEGORY_NAME org.kde.weather.ion.nmccn)
+    set(LOGGING_CATEGORY_DESCRIPTION "www.nmc.com ion plugin")
     kcoreaddons_add_plugin(${TARGET_NAME} INSTALL_NAMESPACE "${ION_INSTALL_NAMESPACE}")
     target_sources(${TARGET_NAME} PRIVATE nmccn.hpp nmccn.cpp)
 endif()
@@ -13,9 +17,9 @@ endif()
 ecm_qt_declare_logging_category(${TARGET_NAME}
                                 HEADER nmccn_debug.hpp
                                 IDENTIFIER IONENGINE_NMCCN
-                                CATEGORY_NAME kde.dataengine.ion.nmccn
+                                CATEGORY_NAME ${LOGGING_CATEGORY_NAME}
                                 DEFAULT_SEVERITY Info
-                                DESCRIPTION "DataEngine ion nmccn"
+                                DESCRIPTION "${LOGGING_CATEGORY_DESCRIPTION}"
                                 EXPORT PLASMAWORKSPACE)
 
 find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Network)

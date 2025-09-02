@@ -10,11 +10,11 @@
 
 #ifdef ION_LEGACY
 #include <ion.h>
-#else
+#else // ION_LEGACY
 #include <weatherion_export.h>
 typedef Ion IonInterface
 #error "Not implemented yet."
-#endif
+#endif // ION_LEGACY
 
 #define USER_AGENT "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
 // String 9999 means an invalid value from api, maybe record is outdated.
@@ -38,12 +38,12 @@ struct WarnInfo
     QJsonObject warnObject;
 };
 
-class Q_DECL_EXPORT WwwNmcCnIon : public IonInterface
+class Q_DECL_EXPORT NmcCnIon : public IonInterface
 {
     Q_OBJECT
 public:
-    WwwNmcCnIon(QObject *parent);
-    ~WwwNmcCnIon() override;
+    NmcCnIon(QObject *parent);
+    ~NmcCnIon() override;
 
 private:
     const char placeInfoSep = '|';

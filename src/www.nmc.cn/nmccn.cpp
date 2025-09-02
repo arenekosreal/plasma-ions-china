@@ -13,14 +13,14 @@
 
 #include "nmccn.hpp"
 
-WwwNmcCnIon::WwwNmcCnIon(QObject *parent)
+NmcCnIon::NmcCnIon(QObject *parent)
     : IonInterface(parent)
 {
     networkAccessManager.setParent(this);
     setInitialized(true);
 }
 
-WwwNmcCnIon::~WwwNmcCnIon()
+NmcCnIon::~NmcCnIon()
 {
 #ifdef ION_LEGACY
     reset();
@@ -31,7 +31,7 @@ WwwNmcCnIon::~WwwNmcCnIon()
 #endif // ION_LEGACY
 }
 
-WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
+NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
 {
     bool ok;
     const int imgId = img.toInt(&ok);
@@ -40,73 +40,73 @@ WwwNmcCnIon::ConditionIcons WwwNmcCnIon::getWeatherConditionIcon(const QString &
         {
             case 0:
                 if (windy && night) {
-                    return WwwNmcCnIon::ConditionIcons::ClearWindyNight;
+                    return ClearWindyNight;
                 }
                 else if (windy) {
-                    return WwwNmcCnIon::ConditionIcons::ClearWindyDay;
+                    return ClearWindyDay;
                 }
                 else if (night) {
-                    return WwwNmcCnIon::ConditionIcons::ClearNight;
+                    return ClearNight;
                 }
                 else {
-                    return WwwNmcCnIon::ConditionIcons::ClearDay;
+                    return ClearDay;
                 }
             case 1:
                 if (windy && night) {
-                    return WwwNmcCnIon::ConditionIcons::PartlyCloudyWindyNight;
+                    return PartlyCloudyWindyNight;
                 }
                 else if (windy) {
-                    return WwwNmcCnIon::ConditionIcons::PartlyCloudyWindyDay;
+                    return PartlyCloudyWindyDay;
                 }
                 else if (night) {
-                    return WwwNmcCnIon::ConditionIcons::PartlyCloudyNight;
+                    return PartlyCloudyNight;
                 }
                 else {
-                    return WwwNmcCnIon::ConditionIcons::PartlyCloudyDay;
+                    return PartlyCloudyDay;
                 }
             case 2:
                 if (windy) {
-                    return WwwNmcCnIon::ConditionIcons::OvercastWindy;
+                    return OvercastWindy;
                 }
                 else {
-                    return WwwNmcCnIon::ConditionIcons::Overcast;
+                    return Overcast;
                 }
             case 3:
                 if (night) {
-                    return WwwNmcCnIon::ConditionIcons::ChanceShowersNight;
+                    return ChanceShowersNight;
                 }
                 else {
-                    return WwwNmcCnIon::ConditionIcons::ChanceShowersDay;
+                    return ChanceShowersDay;
                 }
             case 4:
                 if (night) {
-                    return WwwNmcCnIon::ConditionIcons::ChanceThunderstormNight;
+                    return ChanceThunderstormNight;
                 }
                 else {
-                    return WwwNmcCnIon::ConditionIcons::ChanceThunderstormDay;
+                    return ChanceThunderstormDay;
                 }
             //case 5:
                 // TODO
             //case 6:
                 // TODO
             case 7:
-                return WwwNmcCnIon::ConditionIcons::LightRain;
+                return LightRain;
             case 8:
-                return WwwNmcCnIon::ConditionIcons::Rain;
+                return Rain;
             case 9:
             case 10:
-                return WwwNmcCnIon::ConditionIcons::Thunderstorm;
+                return Thunderstorm;
             default:
-                return WwwNmcCnIon::ConditionIcons::NotAvailable;
+                return NotAvailable;
         }
     }
     else {
         qDebug(IONENGINE_NMCCN) << "Failed to parse img id:" << img;
-        return WwwNmcCnIon::ConditionIcons::NotAvailable;
+        return NotAvailable;
     }
 }
 
-QString WwwNmcCnIon::getWindDirectionString(const float degree) const
+QString NmcCnIon::getWindDirectionString(const float degree) const
 {
     if (degree <= 11.25 && degree > 0) {
         return "N";
@@ -165,7 +165,7 @@ QString WwwNmcCnIon::getWindDirectionString(const float degree) const
     }
 }
 
-QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
+QNetworkReply *NmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
 {
     const QString encodedSearchString = searchString.toUtf8().toPercentEncoding();
     QNetworkRequest request;
@@ -187,7 +187,7 @@ QNetworkReply *WwwNmcCnIon::requestSearchingPlacesApi(const QString &searchStrin
     return networkAccessManager.get(request);
 }
 
-QNetworkReply *WwwNmcCnIon::requestWeatherApi(const QString &stationId, const QString &referer)
+QNetworkReply *NmcCnIon::requestWeatherApi(const QString &stationId, const QString &referer)
 {
     QNetworkRequest request;
     QUrl url(WEATHER_API);
@@ -204,7 +204,7 @@ QNetworkReply *WwwNmcCnIon::requestWeatherApi(const QString &stationId, const QS
     return networkAccessManager.get(request);
 }
 
-QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
+QJsonArray NmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
 {
     qDebug(IONENGINE_NMCCN) << "Setting searching data based on reply of url:" << reply->url();
     QJsonParseError error;
@@ -223,7 +223,7 @@ QJsonArray WwwNmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
     return ret;
 }
 
-QJsonObject WwwNmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
+QJsonObject NmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
 {
     qDebug(IONENGINE_NMCCN) << "Setting weather api data based on reply of url:" << reply->url();
     QJsonParseError error;
@@ -242,7 +242,7 @@ QJsonObject WwwNmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
     return ret;
 }
 
-bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
+bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
 {
     QRegularExpression invalidValueRegex("^" INVALID_VALUE_STR "$");
     const QString warnObjectAlert = warnObject["alert"].toString().remove(invalidValueRegex);
@@ -292,7 +292,7 @@ bool WwwNmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QStri
     return false;
 }
 
-bool WwwNmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString &stationId)
+bool NmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString &stationId)
 {
     const QRegularExpression invalidValueRegex("^" INVALID_VALUE_STR "$");
     const QJsonObject dayWeather = day["weather"].toObject();
@@ -316,9 +316,9 @@ bool WwwNmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString 
 
 #ifdef ION_LEGACY
 
-K_PLUGIN_CLASS_WITH_JSON(WwwNmcCnIon, "metadata.legacy.json");
+K_PLUGIN_CLASS_WITH_JSON(NmcCnIon, "metadata.legacy.json");
 
-void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString &source)
+void NmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString &source)
 {
     std::function<QJsonArray(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractSearchApiResponse(r);};
     QJsonArray searchResult = handleNetworkReply(reply, wrapper);
@@ -347,7 +347,7 @@ void WwwNmcCnIon::onSearchApiRequestFinished(QNetworkReply *reply, const QString
     reply->deleteLater();
 }
 
-void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData)
+void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData)
 {
     std::function<QJsonObject(QNetworkReply*)> wrapper = [=](QNetworkReply* r){return this->extractWeatherApiResponse(r);};
     QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
@@ -375,7 +375,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
         const QJsonObject wind = real["wind"].toObject();
         const QDateTime now = QDateTime::currentDateTime();
         const bool currentIsNight = sunset <= now || now < sunrise;
-        const WwwNmcCnIon::ConditionIcons currentWeatherConditionIcon =
+        const ConditionIcons currentWeatherConditionIcon =
             getWeatherConditionIcon(weather["img"].toString(), wind["speed"].toDouble() > 1.6, currentIsNight);
         data->insert("Condition Icon", getWeatherIcon(currentWeatherConditionIcon));
         data->insert("Current Conditions", weather["info"].toString()),
@@ -470,7 +470,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
     reply->deleteLater();
 }
 
-bool WwwNmcCnIon::updateIonSource(const QString &source)
+bool NmcCnIon::updateIonSource(const QString &source)
 {
     // source format:
     // ionname|validate|place_name|extra - Triggers validation of place
@@ -513,7 +513,7 @@ bool WwwNmcCnIon::updateIonSource(const QString &source)
     return true;
 }
 
-void WwwNmcCnIon::reset()
+void NmcCnIon::reset()
 {
     warnInfoCache.clear();
     lastValidDayCache.clear();
@@ -522,14 +522,14 @@ void WwwNmcCnIon::reset()
 }
 #else // ION_LEGACY
 
-K_PLUGIN_CLASS_WITH_JSON(WwwNmcCnIon, "metadata.json");
+K_PLUGIN_CLASS_WITH_JSON(NmcCnIon, "metadata.json");
 
-void WwwNmcCnIon::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &searchString)
+void NmcCnIon::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &searchString)
 {
     
 }
 
-void WwwNmcCnIon::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)
+void NmcCnIon::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)
 {
     
 }
