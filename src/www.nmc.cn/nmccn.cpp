@@ -400,6 +400,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
             const QJsonObject detailObject = detail.at(i).toObject();
 
             QJsonObject day = detailObject["day"].toObject();
+            bool showNightDetailOnly = false;
             if (i==0 && !updateLastValidDayCache(day, stationId)) {
                 if (lastValidDayCache.contains(stationId)) {
                     qWarning(IONENGINE_NMCCN) << "Found invalid day report, using cached value instead...";
@@ -407,6 +408,7 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                 }
                 else {
                     qWarning(IONENGINE_NMCCN) << "Found invalid day report and no cached value.";
+                    showNightDetailOnly = true;
                 }
             }
             const QStringList notWindyPowerList = {"无风", "软风", "0-1级", "1-2级", "0-2级"};
@@ -429,12 +431,16 @@ void WwwNmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QStrin
                                          i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Today", "Today");
             const QString detailWeatherIcon = currentIsNight ? nightWeatherIcon : dayWeatherIcon;
             const QString detailWeatherInfo = currentIsNight ? nightWeather["info"].toString() : dayWeather["info"].toString();
+            const QString detailWeatherMaxTemperature = i == 0 && currentIsNight && showNightDetailOnly ?
+                "N/U" : QString("%1").arg(std::max(dayWeatherTemperature, nightWeatherTemperature));
+            const QString detailWeatherMinTemperature = i == 0 && currentIsNight && showNightDetailOnly ?
+                QString("%1").arg(nightWeatherTemperature) : QString("%1").arg(std::min(dayWeatherTemperature, nightWeatherTemperature));
             const QString forecastRelatedValue = forecastRelatedValueTemplate
                 .arg(detailTitle)
                 .arg(detailWeatherIcon)
                 .arg(detailWeatherInfo)
-                .arg(std::max(dayWeatherTemperature, nightWeatherTemperature))
-                .arg(std::min(dayWeatherTemperature, nightWeatherTemperature))
+                .arg(detailWeatherMaxTemperature)
+                .arg(detailWeatherMinTemperature)
                 .arg("N/U");
             data->insert(forecastRelatedKey, forecastRelatedValue);
         }
