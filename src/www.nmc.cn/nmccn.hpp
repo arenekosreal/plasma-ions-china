@@ -82,20 +82,20 @@ private:
 private:
     const char sourceSep = '|';
     QCache<QString, Plasma5Support::DataEngine::Data> dataCache;
-    // Slots
+
+private slots:
     void onSearchApiRequestFinished(QNetworkReply *reply, const QString &source);
     void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData);
-    void onWebPageRequestFinished(QNetworkReply *reply, const QString &source, const bool callSetData);
 
 // IonInterface API
 protected:
     bool updateIonSource(const QString &source) override;
 
-public Q_SLOTS:
+public slots:
     void reset() override;
 #else // ION_LEGACY
 // IonInterface API
-public Q_SLOTS:
+public slots:
     void findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &serchString) override;
     void fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo) override;
 #endif // ION_LEGACY

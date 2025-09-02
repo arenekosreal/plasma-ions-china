@@ -22,12 +22,11 @@ NmcCnIon::NmcCnIon(QObject *parent)
 
 NmcCnIon::~NmcCnIon()
 {
-#ifdef ION_LEGACY
-    reset();
-#else // ION_LEGACY
     warnInfoCache.clear();
     lastValidDayCache.clear();
     networkAccessManager.clearAccessCache();
+#ifdef ION_LEGACY
+    dataCache.clear();
 #endif // ION_LEGACY
 }
 
@@ -515,10 +514,7 @@ bool NmcCnIon::updateIonSource(const QString &source)
 
 void NmcCnIon::reset()
 {
-    warnInfoCache.clear();
-    lastValidDayCache.clear();
-    networkAccessManager.clearAccessCache();
-    dataCache.clear();
+    updateAllSources();
 }
 #else // ION_LEGACY
 
