@@ -35,12 +35,12 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 ### Dependencies
 
-### Runtime dependencies
+#### Runtime dependencies
 
 - qt6-base
 - plasma-workspace < 6.5 OR kdeplasma-addons >= 6.5
 
-### Buildtime extra dependencies
+#### Buildtime extra dependencies
 
 - cmake
 - extra-cmake-modules
@@ -51,7 +51,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 |Name|Reverse Engineered|Comment|
 |----|------------------|-------|
-|[nmccn](./src/www.nmc.cn)|Y|APIs are scratched from Dev Tools of Chromium.|
+|[nmccn](./src/www.nmc.cn)|Y|The passed daytime report is not available when is night.|
 
 ## Adding new ion
 
@@ -82,7 +82,7 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
    For legacy ion, you need to implement those methods:
 
    - `void IonInterface::reset()`
-   - `bool IonInterface::updateIonSource(const QString &source)`.
+   - `bool IonInterface::updateIonSource(const QString &source)`
 
    See https://techbase.kde.org/Projects/Plasma/Weather/Ions for more info about source string and how to provide data to consumer.
    See [/usr/include/plasma5support/weather/ion.h](/usr/include/plasma5support/weather/ion.h) for more about `IonInterface`.
@@ -90,7 +90,7 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
    For new ion, you need to implement those methods:
 
    - `void Ion::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Location>>> promise, const QString &searchString)`
-   - `void Ion::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)`.
+   - `void Ion::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)`
 
    When you need translate some strings, you can use macro `KDE_WEATHER_TRANSLATION_DOMAIN` with methods like `i18nd` to reuse existing translation from KDE.
    Our default translation domain is `plasma_ions_china`.
