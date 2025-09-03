@@ -263,13 +263,12 @@ bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString 
         const WarnInfo warnInfo = warnInfos->at(i);
         const QString warnSignalType = warnInfo.warnObject["signaltype"].toString();
         const QString warnSignalLevel = warnInfo.warnObject["signallevel"].toString();
-        const QString warnDescription = warnSignalType + "-" + warnSignalLevel;
         if (now > warnInfo.startTime.date().endOfDay()) {
-            qDebug(IONENGINE_NMCCN) << "Removing outdated warn:" << warnDescription;
+            qDebug(IONENGINE_NMCCN) << "Removing outdated warn:" << warnInfo.warnObject << "started at" << warnInfo.startTime;
             warnInfos->remove(i);
         }
-        else if (warnSignalType == warnObjectSignalType && warnSignalLevel == warnObjectSignalLevel) {
-            qDebug(IONENGINE_NMCCN) << "Removing existing warn:" << warnDescription;
+        else if (warnObjectValid && warnSignalType == warnObjectSignalType) {
+            qDebug(IONENGINE_NMCCN) << "Removing existing warn:" << warnInfo.warnObject << "started at" << warnInfo.startTime;
             warnInfos->remove(i);
         }
     }
