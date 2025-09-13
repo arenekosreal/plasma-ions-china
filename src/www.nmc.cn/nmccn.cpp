@@ -100,7 +100,7 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
         }
     }
     else {
-        qDebug(IONENGINE_NMCCN) << "Failed to parse img id:" << img;
+        qWarning(IONENGINE_NMCCN) << "Failed to parse img id:" << img;
         return NotAvailable;
     }
 }
@@ -159,7 +159,7 @@ QString NmcCnIon::getWindDirectionString(const float degree) const
         return "N";
     }
     else {
-        qFatal(IONENGINE_NMCCN) << "Invalid degree:" << degree;
+        qWarning(IONENGINE_NMCCN) << "Invalid degree:" << degree;
         return "VR";
     }
 }
