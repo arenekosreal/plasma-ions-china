@@ -405,19 +405,16 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &
                     showNightDetailOnly = true;
                 }
             }
-            const QStringList notWindyPowerList = {"无风", "软风", "0-1级", "1-2级", "0-2级"};
             const QJsonObject dayWeather = day["weather"].toObject();
             const QJsonObject dayWind = day["wind"].toObject();
-            const bool dayWindy = !notWindyPowerList.contains(dayWind["power"].toString());
             const double dayWeatherTemperature = dayWeather["temperature"].toString().toDouble();
-            const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), dayWindy, false));
+            const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather["img"].toString(), false, false));
 
             const QJsonObject night = detailObject["night"].toObject();
             const QJsonObject nightWeather = night["weather"].toObject();
             const QJsonObject nightWind = night["wind"].toObject();
-            const bool nightWindy = !notWindyPowerList.contains(nightWind["power"].toString());
             const double nightWeatherTemperature = nightWeather["temperature"].toString().toDouble();
-            const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), nightWindy, true));
+            const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather["img"].toString(), false, true));
 
             const QString detailTitle =
                 i > 0 ? QDate::fromString(detailObject["date"].toString(), realDateFormat).toString(realMonthDayFormat) :
