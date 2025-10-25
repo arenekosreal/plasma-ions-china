@@ -6,14 +6,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-#include "nmccn_debug.hpp"
-
-#ifdef ION_LEGACY
 #include <ion.h>
-#else // ION_LEGACY
-#include <weatherion_export.h>
-typedef Ion IonInterface
-#error "Not implemented yet."
+#ifndef ION_LEGACY
+typedef Ion IonInterface;
 #endif // ION_LEGACY
 
 #define USER_AGENT "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
@@ -48,9 +43,9 @@ public:
 private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
-    const QString realMonthDayFormat = "MM-dd";
+    const QString realMonthDayFormat = QString::fromLatin1("MM-dd");
     const QString realDateFormat = "yyyy-" + realMonthDayFormat;
-    const QString realTimeFormat = "HH:mm";
+    const QString realTimeFormat = QString::fromLatin1("HH:mm");
     const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
     QCache<QString, QList<WarnInfo>> warnInfoCache;
     QCache<QString, QJsonObject> lastValidDayCache;
@@ -84,7 +79,7 @@ public slots:
     void reset() override;
 #else // ION_LEGACY
 // IonInterface API
-public slots:
+public:
     void findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &serchString) override;
     void fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo) override;
 #endif // ION_LEGACY
