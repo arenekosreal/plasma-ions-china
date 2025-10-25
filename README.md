@@ -45,7 +45,6 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 - cmake
 - extra-cmake-modules
 - git (If you want to automatically set project version from git tag)
-- gettext
 
 ## Ions
 
