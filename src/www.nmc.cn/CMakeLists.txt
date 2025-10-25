@@ -29,4 +29,5 @@ target_link_libraries(${TARGET_NAME}
                               Qt::Core
                               Qt::Network
                               KF${QT_MAJOR_VERSION}::UnitConversion
-                              KF${QT_MAJOR_VERSION}::I18n)                          
+                              KF${QT_MAJOR_VERSION}::I18n
+                              KF${QT_MAJOR_VERSION}::CoreAddons)

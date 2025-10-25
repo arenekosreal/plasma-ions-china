@@ -15,9 +15,10 @@ if (PlasmaWeatherIon_INCLUDE_DIR AND PlasmaWeatherIon_LIBRARY)
 endif (PlasmaWeatherIon_INCLUDE_DIR AND PlasmaWeatherIon_LIBRARY)
 
 
-set(_ION_H_NEW weatherion_export.h)
-find_path(_INCLUDE_DIR_NEW "plasma/weatherion/${_ION_H_NEW}")
-find_library(_LIBRARY_NEW weatherion)
+set(_ION_H_NEW ion.h)
+find_path(_INCLUDE_DIR_NEW "plasma/weatherion/${_ION_H_NEW}"
+          PATHS "${CMAKE_CURRENT_SOURCE_DIR}/include")
+find_library(_LIBRARY_NEW plasmaweatherion)
 
 set(_ION_H_OLD ion.h)
 find_path(_INCLUDE_DIR_OLD "plasma5support/weather/${_ION_H_OLD}")
@@ -33,9 +34,11 @@ if (_INCLUDE_DIR_NEW AND _LIBRARY_NEW)
     add_library(Plasma::WeatherIon SHARED IMPORTED GLOBAL)
     set_target_properties(Plasma::WeatherIon
                           PROPERTIES IMPORTED_LOCATION "${_LIBRARY_NEW}"
-                                     INTERFACE_INCLUDE_DIRECTORIES ${PlasmaWeatherIon_INCLUDE_DIRS})
+                                     INTERFACE_INCLUDE_DIRECTORIES "${PlasmaWeatherIon_INCLUDE_DIRS}")
+    find_package(PlasmaWeatherData REQUIRED)
+    target_link_libraries(Plasma::WeatherIon INTERFACE Plasma::WeatherData)
 elseif (_INCLUDE_DIR_OLD AND _LIBRARY_OLD)
-    message(DEBUG "Found library in plasma-workspace.")
+    message(DEBUG "Found library in plasma-workspace/plasma5support.")
     set(PlasmaWeatherIon_FOUND TRUE)
     set(PlasmaWeatherIon_INCLUDE_DIRS "${_INCLUDE_DIR_OLD}/plasma5support/weather")
     set(PlasmaWeatherIon_LIBRARIES "${_LIBRARY_OLD}")
