@@ -1,5 +1,6 @@
 set(ION_NAME nmccn)
 if(PlasmaWeatherIon_LEGACY)
+    message(WARNING "No maintainer is using KDE < 6.5 so the legacy version is unmaintained now.")
     set(TARGET_NAME plasma_engine_${ION_NAME})
     set(LOGGING_CATEGORY_NAME kde.dataengine.ion.nmccn)
     set(LOGGING_CATEGORY_DESCRIPTION "DataEngine ion nmccn")
