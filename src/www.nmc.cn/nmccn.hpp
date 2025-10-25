@@ -65,18 +65,7 @@ private:
     QJsonArray extractSearchApiResponse(QNetworkReply *reply);
     QJsonObject extractWeatherApiResponse(QNetworkReply *reply);
     template<typename T>
-    T handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
-    {
-        if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
-            qDebug(IONENGINE_NMCCN) << "Request successfully.";
-            return callable(reply);
-        }
-        else {
-            qFatal(IONENGINE_NMCCN) << "Request failed with error: " << reply->error();
-        }
-        T ret;
-        return ret;
-    };
+    T handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable);
 
 #ifdef ION_LEGACY
 private:

@@ -30,6 +30,26 @@ NmcCnIon::~NmcCnIon()
 #endif // ION_LEGACY
 }
 
+template<typename T>
+T NmcCnIon::handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkReply*)> callable)
+{
+    if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
+        qDebug(IONENGINE_NMCCN) << "Request successfully.";
+        return callable(reply);
+    }
+    else {
+        qFatal(IONENGINE_NMCCN) << "Request failed with error: " << reply->error();
+    }
+    T ret;
+    return ret;
+};
+
+template
+QJsonArray NmcCnIon::handleNetworkReply<QJsonArray>(QNetworkReply* reply, std::function<QJsonArray(QNetworkReply*)> callable);
+
+template
+QJsonObject NmcCnIon::handleNetworkReply<QJsonObject>(QNetworkReply* reply, std::function<QJsonObject(QNetworkReply*)> callable);
+
 NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
 {
     bool ok;
