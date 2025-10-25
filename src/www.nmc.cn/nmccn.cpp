@@ -20,7 +20,7 @@ NmcCnIon::NmcCnIon(QObject *parent)
     networkAccessManager.setParent(this);
 #ifdef ION_LEGACY
     setInitialized(true);
-#endif
+#endif // ION_LEGACY
 }
 
 NmcCnIon::~NmcCnIon()
