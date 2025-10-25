@@ -57,7 +57,7 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
 {
     bool ok;
     const int imgId = img.toInt(&ok);
-    if (img != QString::fromLatin1(INVALID_VALUE_STR) && ok) {
+    if (img != QStringLiteral(INVALID_VALUE_STR) && ok) {
         switch (imgId)
         {
             case 0:
@@ -131,59 +131,59 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
 QString NmcCnIon::getWindDirectionString(const float degree) const
 {
     if (degree <= 11.25 && degree > 0) {
-        return QString::fromLatin1("N");
+        return QStringLiteral("N");
     }
     else if (degree <= 33.75 && degree > 11.25) {
-        return QString::fromLatin1("NNE");
+        return QStringLiteral("NNE");
     }
     else if (degree <= 56.25 && degree > 33.75) {
-        return QString::fromLatin1("NE");
+        return QStringLiteral("NE");
     }
     else if (degree <= 78.75 && degree > 56.25) {
-        return QString::fromLatin1("ENE");
+        return QStringLiteral("ENE");
     }
     else if (degree <= 101.25 && degree > 78.75) {
-        return QString::fromLatin1("E");
+        return QStringLiteral("E");
     }
     else if (degree <= 123.75 && degree > 101.25) {
-        return QString::fromLatin1("ESE");
+        return QStringLiteral("ESE");
     }
     else if (degree <= 146.25 && degree > 123.75) {
-        return QString::fromLatin1("SE");
+        return QStringLiteral("SE");
     }
     else if (degree <= 168.75 && degree > 146.25) {
-        return QString::fromLatin1("SSE");
+        return QStringLiteral("SSE");
     }
     else if (degree <= 191.25 && degree > 168.75) {
-        return QString::fromLatin1("S");
+        return QStringLiteral("S");
     }
     else if (degree <= 213.75 && degree > 191.25) {
-        return QString::fromLatin1("SSW");
+        return QStringLiteral("SSW");
     }
     else if (degree <= 236.25 && degree > 213.75) {
-        return QString::fromLatin1("SW");
+        return QStringLiteral("SW");
     }
     else if (degree <= 258.75 && degree > 236.25) {
-        return QString::fromLatin1("WSW");
+        return QStringLiteral("WSW");
     }
     else if (degree <= 281.25 && degree > 258.75) {
-        return QString::fromLatin1("W");
+        return QStringLiteral("W");
     }
     else if (degree <= 303.75 && degree > 281.25) {
-        return QString::fromLatin1("WNW");
+        return QStringLiteral("WNW");
     }
     else if (degree <= 326.25 && degree > 303.75) {
-        return QString::fromLatin1("NW");
+        return QStringLiteral("NW");
     }
     else if (degree <= 348.75 && degree > 326.25) {
-        return QString::fromLatin1("NNW");
+        return QStringLiteral("NNW");
     }
     else if (degree <= 360 && degree > 348.75) {
-        return QString::fromLatin1("N");
+        return QStringLiteral("N");
     }
     else {
         qWarning(IONENGINE_NMCCN) << "Invalid degree:" << degree;
-        return QString::fromLatin1("VR");
+        return QStringLiteral("VR");
     }
 }
 
@@ -191,12 +191,12 @@ QNetworkReply *NmcCnIon::requestSearchingPlacesApi(const QString &searchString, 
 {
     const QString encodedSearchString = QString::fromLocal8Bit(searchString.toUtf8().toPercentEncoding());
     QNetworkRequest request;
-    QUrl url(QString::fromLatin1(SEARCH_API));
+    QUrl url(QStringLiteral(SEARCH_API));
     QUrlQuery query;
-    query.addQueryItem(QString::fromLatin1("q"), encodedSearchString);
-    query.addQueryItem(QString::fromLatin1("limit"), QString::fromLatin1("%1").arg(searchLimit));
-    query.addQueryItem(QString::fromLatin1("timestamp"), QString::fromLatin1("%1").arg(QDateTime::currentMSecsSinceEpoch()));
-    query.addQueryItem(QString::fromLatin1("_"), QString::fromLatin1("%1").arg(QDateTime::currentMSecsSinceEpoch()));
+    query.addQueryItem(QStringLiteral("q"), encodedSearchString);
+    query.addQueryItem(QStringLiteral("limit"), QStringLiteral("%1").arg(searchLimit));
+    query.addQueryItem(QStringLiteral("timestamp"), QStringLiteral("%1").arg(QDateTime::currentMSecsSinceEpoch()));
+    query.addQueryItem(QStringLiteral("_"), QStringLiteral("%1").arg(QDateTime::currentMSecsSinceEpoch()));
     url.setQuery(query);
     request.setUrl(url);
     qDebug(IONENGINE_NMCCN) << "Requesting url:" << url;
@@ -212,10 +212,10 @@ QNetworkReply *NmcCnIon::requestSearchingPlacesApi(const QString &searchString, 
 QNetworkReply *NmcCnIon::requestWeatherApi(const QString &stationId, const QString &referer)
 {
     QNetworkRequest request;
-    QUrl url(QString::fromLatin1(WEATHER_API));
+    QUrl url(QStringLiteral(WEATHER_API));
     QUrlQuery query;
-    query.addQueryItem(QString::fromLatin1("stationid"), stationId);
-    query.addQueryItem(QString::fromLatin1("_"), QString::fromLatin1("%1").arg(QDateTime::currentMSecsSinceEpoch()));
+    query.addQueryItem(QStringLiteral("stationid"), stationId);
+    query.addQueryItem(QStringLiteral("_"), QStringLiteral("%1").arg(QDateTime::currentMSecsSinceEpoch()));
     url.setQuery(query);
     request.setUrl(url);
     QHttpHeaders headers;
@@ -231,14 +231,14 @@ QJsonArray NmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
     qDebug(IONENGINE_NMCCN) << "Setting searching data based on reply of url:" << reply->url();
     QJsonParseError error;
     const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll(), &error).object();
-    switch (responseObject[QString::fromLatin1("code")].toInt(-1)) {
+    switch (responseObject[QStringLiteral("code")].toInt(-1)) {
         case 0:
-            return responseObject[QString::fromLatin1("data")].toArray();
+            return responseObject[QStringLiteral("data")].toArray();
         case -1:
             qFatal(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
             break;
         default:
-            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QString::fromLatin1("msg")].toString();
+            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
             break;
     }
     QJsonArray ret;
@@ -250,14 +250,14 @@ QJsonObject NmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
     qDebug(IONENGINE_NMCCN) << "Setting weather api data based on reply of url:" << reply->url();
     QJsonParseError error;
     const QJsonObject responseObject = QJsonDocument::fromJson(reply->readAll(), &error).object();
-    switch (responseObject[QString::fromLatin1("code")].toInt(-1)) {
+    switch (responseObject[QStringLiteral("code")].toInt(-1)) {
         case 0:
-            return responseObject[QString::fromLatin1("data")].toObject();
+            return responseObject[QStringLiteral("data")].toObject();
         case -1:
             qFatal(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
             break;
         default:
-            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QString::fromLatin1("msg")].toString();
+            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
             break;
     }
     QJsonObject ret;
@@ -266,13 +266,13 @@ QJsonObject NmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
 
 bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId)
 {
-    QRegularExpression invalidValueRegex(QString::fromLatin1("^" INVALID_VALUE_STR "$"));
-    const QString warnObjectAlert = warnObject[QString::fromLatin1("alert")].toString().remove(invalidValueRegex);
-    const QString warnObjectIssueContent = warnObject[QString::fromLatin1("issuecontent")].toString().remove(invalidValueRegex);
-    const QString warnObjectProvince = warnObject[QString::fromLatin1("province")].toString().remove(invalidValueRegex);
-    const QString warnObjectSignalLevel = warnObject[QString::fromLatin1("signallevel")].toString().remove(invalidValueRegex);
-    const QString warnObjectSignalType = warnObject[QString::fromLatin1("signaltype")].toString().remove(invalidValueRegex);
-    const QString warnObjectUrl = warnObject[QString::fromLatin1("url")].toString().remove(invalidValueRegex);
+    QRegularExpression invalidValueRegex(QStringLiteral("^" INVALID_VALUE_STR "$"));
+    const QString warnObjectAlert = warnObject[QStringLiteral("alert")].toString().remove(invalidValueRegex);
+    const QString warnObjectIssueContent = warnObject[QStringLiteral("issuecontent")].toString().remove(invalidValueRegex);
+    const QString warnObjectProvince = warnObject[QStringLiteral("province")].toString().remove(invalidValueRegex);
+    const QString warnObjectSignalLevel = warnObject[QStringLiteral("signallevel")].toString().remove(invalidValueRegex);
+    const QString warnObjectSignalType = warnObject[QStringLiteral("signaltype")].toString().remove(invalidValueRegex);
+    const QString warnObjectUrl = warnObject[QStringLiteral("url")].toString().remove(invalidValueRegex);
     const bool warnObjectValid = !warnObjectAlert.isEmpty() && !warnObjectIssueContent.isEmpty() &&
                                  !warnObjectProvince.isEmpty() && !warnObjectSignalLevel.isEmpty() &&
                                  !warnObjectSignalType.isEmpty() && !warnObjectUrl.isEmpty();
@@ -284,8 +284,8 @@ bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString 
     const QDateTime now = QDateTime::currentDateTime();
     for (int i=0; i<warnInfos->count();i++) {
         const WarnInfo warnInfo = warnInfos->at(i);
-        const QString warnSignalType = warnInfo.warnObject[QString::fromLatin1("signaltype")].toString();
-        const QString warnSignalLevel = warnInfo.warnObject[QString::fromLatin1("signallevel")].toString();
+        const QString warnSignalType = warnInfo.warnObject[QStringLiteral("signaltype")].toString();
+        const QString warnSignalLevel = warnInfo.warnObject[QStringLiteral("signallevel")].toString();
         if (now > warnInfo.startTime.date().endOfDay()) {
             qDebug(IONENGINE_NMCCN) << "Removing outdated warn:" << warnInfo.warnObject << "started at" << warnInfo.startTime;
             warnInfos->remove(i);
@@ -311,14 +311,14 @@ bool NmcCnIon::updateWarnInfoCache(const QJsonObject &warnObject, const QString 
 
 bool NmcCnIon::updateLastValidDayCache(const QJsonObject &day, const QString &stationId)
 {
-    const QRegularExpression invalidValueRegex(QString::fromLatin1("^" INVALID_VALUE_STR "$"));
-    const QJsonObject dayWeather = day[QString::fromLatin1("weather")].toObject();
-    const QString dayWeatherInfo = dayWeather[QString::fromLatin1("info")].toString().remove(invalidValueRegex);
-    const QString dayWeatherImg = dayWeather[QString::fromLatin1("img")].toString().remove(invalidValueRegex);
-    const QString dayWeatherTemperature = dayWeather[QString::fromLatin1("temperature")].toString().remove(invalidValueRegex);
-    const QJsonObject dayWind = day[QString::fromLatin1("wind")].toObject();
-    const QString dayWindDirect = dayWind[QString::fromLatin1("direct")].toString().remove(invalidValueRegex);
-    const QString dayWindPower = dayWind[QString::fromLatin1("power")].toString().remove(invalidValueRegex);
+    const QRegularExpression invalidValueRegex(QStringLiteral("^" INVALID_VALUE_STR "$"));
+    const QJsonObject dayWeather = day[QStringLiteral("weather")].toObject();
+    const QString dayWeatherInfo = dayWeather[QStringLiteral("info")].toString().remove(invalidValueRegex);
+    const QString dayWeatherImg = dayWeather[QStringLiteral("img")].toString().remove(invalidValueRegex);
+    const QString dayWeatherTemperature = dayWeather[QStringLiteral("temperature")].toString().remove(invalidValueRegex);
+    const QJsonObject dayWind = day[QStringLiteral("wind")].toObject();
+    const QString dayWindDirect = dayWind[QStringLiteral("direct")].toString().remove(invalidValueRegex);
+    const QString dayWindPower = dayWind[QStringLiteral("power")].toString().remove(invalidValueRegex);
     const bool dayValid = !dayWeatherInfo.isEmpty() && !dayWeatherImg.isEmpty() && !dayWeatherTemperature.isEmpty() &&
                           !dayWindDirect.isEmpty() && !dayWindPower.isEmpty();
     if (dayValid) {

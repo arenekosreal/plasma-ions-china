@@ -43,9 +43,9 @@ public:
 private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
-    const QString realMonthDayFormat = QString::fromLatin1("MM-dd");
+    const QString realMonthDayFormat = QStringLiteral("MM-dd");
     const QString realDateFormat = "yyyy-" + realMonthDayFormat;
-    const QString realTimeFormat = QString::fromLatin1("HH:mm");
+    const QString realTimeFormat = QStringLiteral("HH:mm");
     const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
     QCache<QString, QList<WarnInfo>> warnInfoCache;
     QCache<QString, QJsonObject> lastValidDayCache;
