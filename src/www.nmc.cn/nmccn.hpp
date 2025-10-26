@@ -7,6 +7,7 @@
 #include <QNetworkReply>
 
 #include <ion.h>
+#include <qnamespace.h>
 #ifndef ION_LEGACY
 typedef Ion IonInterface;
 #endif // ION_LEGACY
@@ -44,9 +45,11 @@ private:
     const char placeInfoSep = '|';
     const char extraDataSep = ';';
     const QString realMonthDayFormat = QStringLiteral("MM-dd");
-    const QString realDateFormat = "yyyy-" + realMonthDayFormat;
+    const QString realDateFormat = QStringLiteral("yyyy-") + realMonthDayFormat;
     const QString realTimeFormat = QStringLiteral("HH:mm");
-    const QString realDateTimeFormat = realDateFormat + " " + realTimeFormat;
+    const QString realDateTimeFormat = realDateFormat + QStringLiteral(" ") + realTimeFormat;
+    const Qt::ConnectionType networkAccessManagerSlotConnectionType =
+        (Qt::ConnectionType)(Qt::ConnectionType::AutoConnection | Qt::ConnectionType::SingleShotConnection);
     QCache<QString, QList<WarnInfo>> warnInfoCache;
     QCache<QString, QJsonObject> lastValidDayCache;
     QNetworkAccessManager networkAccessManager;
@@ -67,7 +70,7 @@ private:
     const char sourceSep = '|';
     QCache<QString, Plasma5Support::DataEngine::Data> dataCache;
 
-private slots:
+private Q_SLOTS:
     void onSearchApiRequestFinished(QNetworkReply *reply, const QString &source);
     void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &source, const QString &creditUrl, const bool callSetData);
 
@@ -75,9 +78,19 @@ private slots:
 protected:
     bool updateIonSource(const QString &source) override;
 
-public slots:
+public Q_SLOTS:
     void reset() override;
 #else // ION_LEGACY
+
+private:
+    std::shared_ptr<QPromise<std::shared_ptr<Locations>>> locationsPromise;
+    std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> forecastPromise;
+    Warnings::PriorityClass getWarnPriority(const QString &signallevel) const;
+
+private Q_SLOTS:
+    void onSearchApiRequestFinished(QNetworkReply *reply);
+    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &extra, const bool &setNewPlaceInfo);
+
 // IonInterface API
 public:
     void findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &serchString) override;
