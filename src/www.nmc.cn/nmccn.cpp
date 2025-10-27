@@ -561,6 +561,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
         if (!apiResponseData.isEmpty()) {
             const QJsonObject real = apiResponseData[QStringLiteral("real")].toObject();
             const QJsonObject station_ = real[QStringLiteral("station")].toObject();
+
             MetaData metaData;
             metaData.setCredit(i18n("Source: National Meteorological Center of China"));
             metaData.setCreditURL(QStringLiteral(API_BASE) + station_[QStringLiteral("url")].toString());
@@ -568,6 +569,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             metaData.setWindSpeedUnit(KUnitConversion::MeterPerSecond);
             metaData.setPressureUnit(KUnitConversion::Hectopascal);
             metaData.setRainfallUnit(KUnitConversion::Millimeter);
+
             Station station;
             const QString stationId = station_[QStringLiteral("code")].toString();
             station.setStation(station_[QStringLiteral("city")].toString());
@@ -584,9 +586,11 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             if (lonOk && latOk) {
                 station.setCoordinates(lat, lon);
             }
+
             const QJsonObject predict = apiResponseData[QStringLiteral("predict")].toObject();
             const QJsonArray detail = predict[QStringLiteral("detail")].toArray();
             const QJsonObject currentDayDetail = detail[0].toObject();
+
             CurrentDay currentDay;
             const QJsonObject currentDayDetailDayObject = currentDayDetail[QStringLiteral("day")].toObject();
             bool currentDayHighTempOk, currentDayLowTempOk;
@@ -612,6 +616,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             if (currentDayLowTempOk) {
                 currentDay.setNormalLowTemp(currentDayLowTemp);
             }
+
             LastDay lastDay;
             QList<qreal> lastDayHourlyTemps;
             for(QJsonValue lastDayHourlyInfo: apiResponseData[QStringLiteral("passedchart")].toArray()) {
@@ -623,6 +628,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
                 lastDay.setNormalHighTemp(max);
                 lastDay.setNormalLowTemp(min);
             }
+
             LastObservation lastObservation;
             lastObservation.setObservationTimestamp(QDateTime::fromString(real[QStringLiteral("publish_time")].toString(), realDateFormat));
             const QJsonObject weather = real[QStringLiteral("weather")].toObject();
@@ -645,6 +651,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             lastObservation.setWindDirection(getWindDirectionString(wind[QStringLiteral("degree")].toDouble()));
             lastObservation.setPressure(weather[QStringLiteral("airpressure")].toDouble());
             lastObservation.setHumidity(weather[QStringLiteral("humidity")].toDouble());
+
             std::shared_ptr<FutureDays> futureDays = std::make_shared<FutureDays>();
             if (detail.count() > 1) {
                 for (int i = 1; i < detail.count(); i++) {
@@ -670,6 +677,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
                     futureDays->addDay(futureDayForecast);
                 }
             }
+
             std::shared_ptr<Warnings> warnings = std::make_shared<Warnings>();
             const QJsonObject warnObject = real[QStringLiteral("warn")].toObject();
             updateWarnInfoCache(warnObject, stationId);
@@ -682,6 +690,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
                 warning.setInfo(QStringLiteral(API_BASE) + warnObject[QStringLiteral("url")].toString());
                 warnings->addWarning(warning);
             } 
+
             std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
             forecast->setMetadata(metaData);
             forecast->setStation(station);
