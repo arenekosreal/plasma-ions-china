@@ -587,10 +587,6 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
                 station.setCoordinates(lat, lon);
             }
 
-            const QJsonObject predict = apiResponseData[QStringLiteral("predict")].toObject();
-            const QJsonArray detail = predict[QStringLiteral("detail")].toArray();
-            const QJsonObject currentDayDetail = detail[0].toObject();
-
             LastDay lastDay;
             QList<qreal> lastDayHourlyTemps;
             for(QJsonValue lastDayHourlyInfo: apiResponseData[QStringLiteral("passedchart")].toArray()) {
@@ -626,7 +622,42 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             lastObservation.setPressure(weather[QStringLiteral("airpressure")].toDouble());
             lastObservation.setHumidity(weather[QStringLiteral("humidity")].toDouble());
 
+            const QJsonObject predict = apiResponseData[QStringLiteral("predict")].toObject();
+            const QJsonArray detail = predict[QStringLiteral("detail")].toArray();
+            const QJsonObject currentDayDetail = detail[0].toObject();
+
             std::shared_ptr<FutureDays> futureDays = std::make_shared<FutureDays>();
+            FutureDayForecast todayDayForecast;
+            const QDate currentDate = QDate::fromString(currentDayDetail[QStringLiteral("date")].toString(), realDateFormat);
+            todayDayForecast.setMonthDay(currentDate.day());
+            todayDayForecast.setWeekDay(QLocale::system().toString(currentDate, QStringLiteral("ddd")));
+            QJsonObject day = currentDayDetail[QStringLiteral("day")].toObject();
+            bool addDay = true;
+            if (!updateLastValidDayCache(day, stationId)) {
+                if (lastValidDayCache.contains(stationId)) {
+                    qWarning(IONENGINE_NMCCN) << "Found invalid day report, using cached value instead...";
+                    day = *lastValidDayCache[stationId];
+                }
+                else {
+                    qWarning(IONENGINE_NMCCN) << "Found invalid day report and no cached value.";
+                    addDay = false;
+                }
+            }
+            if (addDay) {
+                day = day[QStringLiteral("weather")].toObject();
+                FutureForecast daytimeForecast;
+                daytimeForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(day[QStringLiteral("img")].toString(), false, false)));
+                daytimeForecast.setCondition(day[QStringLiteral("info")].toString());
+                daytimeForecast.setHighTemp(day[QStringLiteral("temperature")].toString().toDouble());
+                todayDayForecast.setDaytime(daytimeForecast);
+            }
+            const QJsonObject night = currentDayDetail[QStringLiteral("night")].toObject()[QStringLiteral("weather")].toObject();
+            FutureForecast nightForecast;
+            nightForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(night[QStringLiteral("img")].toString(), false, true)));
+            nightForecast.setCondition(night[QStringLiteral("info")].toString());
+            nightForecast.setLowTemp(night[QStringLiteral("temperature")].toString().toDouble());
+            todayDayForecast.setNight(nightForecast);
+            futureDays->addDay(todayDayForecast);
             if (detail.count() > 1) {
                 for (int i = 1; i < detail.count(); i++) {
                     const QJsonObject detailObject = detail[i].toObject();
