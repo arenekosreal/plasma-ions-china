@@ -111,8 +111,8 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
                 }
             //case 5:
                 // TODO
-            //case 6:
-                // TODO
+            case 6:
+                return RainSnow;
             case 7:
                 return LightRain;
             case 8:
@@ -120,6 +120,17 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
             case 9:
             case 10:
                 return Thunderstorm;
+            case 13:
+                if (night) {
+                    return ChanceSnowNight;
+                }
+                else {
+                    return ChanceSnowDay;
+                }
+            case 14:
+                return LightSnow;
+            case 15:
+                return Snow;
             default:
                 return NotAvailable;
         }
