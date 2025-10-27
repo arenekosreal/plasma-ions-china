@@ -100,7 +100,7 @@ QString NmcCnIon::getWindDirectionString(const float degree) const
         return windDirectionStrings[windDirection];
     }
     qWarning(IONENGINE_NMCCN) << "Invalid degree:" << degree;
-    return QStringLiteral("VR");
+    return windDirectionStrings[windDirectionStrings.count() - 1];
 }
 
 QNetworkReply *NmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
