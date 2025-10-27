@@ -23,7 +23,7 @@ ecm_qt_declare_logging_category(${TARGET_NAME}
                                 DESCRIPTION "${LOGGING_CATEGORY_DESCRIPTION}"
                                 EXPORT PLASMAWORKSPACE)
 
-find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Core Network)
+find_package(Qt${QT_MAJOR_VERSION} ${QT_MIN_VERSION} REQUIRED COMPONENTS Core Network)
 target_link_libraries(${TARGET_NAME}
                       PRIVATE Plasma::WeatherIon
                               Qt::Core
