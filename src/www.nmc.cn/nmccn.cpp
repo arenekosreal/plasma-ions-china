@@ -57,88 +57,28 @@ QJsonObject NmcCnIon::handleNetworkReply<QJsonObject>(QNetworkReply* reply, std:
 
 NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const
 {
-    bool ok;
-    const int imgId = img.toInt(&ok);
-    if (img != QStringLiteral(INVALID_VALUE_STR) && ok) {
-        switch (imgId)
-        {
-            case 0:
-                if (windy && night) {
-                    return ClearWindyNight;
-                }
-                else if (windy) {
-                    return ClearWindyDay;
-                }
-                else if (night) {
-                    return ClearNight;
-                }
-                else {
-                    return ClearDay;
-                }
-            case 1:
-                if (windy && night) {
-                    return PartlyCloudyWindyNight;
-                }
-                else if (windy) {
-                    return PartlyCloudyWindyDay;
-                }
-                else if (night) {
-                    return PartlyCloudyNight;
-                }
-                else {
-                    return PartlyCloudyDay;
-                }
-            case 2:
-                if (windy) {
-                    return OvercastWindy;
-                }
-                else {
-                    return Overcast;
-                }
-            case 3:
-                if (night) {
-                    return ChanceShowersNight;
-                }
-                else {
-                    return ChanceShowersDay;
-                }
-            case 4:
-                if (night) {
-                    return ChanceThunderstormNight;
-                }
-                else {
-                    return ChanceThunderstormDay;
-                }
-            //case 5:
-                // TODO
-            case 6:
-                return RainSnow;
-            case 7:
-                return LightRain;
-            case 8:
-                return Rain;
-            case 9:
-            case 10:
-                return Thunderstorm;
-            case 13:
-                if (night) {
-                    return ChanceSnowNight;
-                }
-                else {
-                    return ChanceSnowDay;
-                }
-            case 14:
-                return LightSnow;
-            case 15:
-                return Snow;
-            default:
-                return NotAvailable;
-        }
+    const QMap<QString, NmcCnIon::ConditionIcons> conditionIconsMap = {
+        {QStringLiteral("0"), windy && night ? ClearWindyNight : windy ? ClearWindyDay : night ? ClearNight : ClearDay},
+        {QStringLiteral("1"), windy && night ? PartlyCloudyWindyNight : windy ? PartlyCloudyWindyDay : night ? PartlyCloudyNight : PartlyCloudyDay},
+        {QStringLiteral("2"), windy ? OvercastWindy : Overcast},
+        {QStringLiteral("3"), night ? ChanceShowersNight : ChanceShowersDay},
+        {QStringLiteral("4"), night ? ChanceThunderstormNight : ChanceThunderstormDay},
+        {QStringLiteral("6"), RainSnow},
+        {QStringLiteral("7"), LightRain},
+        {QStringLiteral("8"), Rain},
+        {QStringLiteral("9"), Thunderstorm},
+        {QStringLiteral("10"), Thunderstorm},
+        {QStringLiteral("13"), night ? ChanceSnowNight : ChanceSnowDay},
+        {QStringLiteral("14"), LightSnow},
+        {QStringLiteral("15"), Snow},
+    };
+    if (conditionIconsMap.contains(img)) {
+        return conditionIconsMap[img];
     }
-    else {
+    if (img != QStringLiteral(INVALID_VALUE_STR)) {
         qWarning(IONENGINE_NMCCN) << "Failed to parse img id:" << img;
-        return NotAvailable;
     }
+    return NotAvailable;
 }
 
 QString NmcCnIon::getWindDirectionString(const float degree) const
