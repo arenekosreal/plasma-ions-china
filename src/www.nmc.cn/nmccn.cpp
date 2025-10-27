@@ -591,32 +591,6 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             const QJsonArray detail = predict[QStringLiteral("detail")].toArray();
             const QJsonObject currentDayDetail = detail[0].toObject();
 
-            CurrentDay currentDay;
-            const QJsonObject currentDayDetailDayObject = currentDayDetail[QStringLiteral("day")].toObject();
-            bool currentDayHighTempOk, currentDayLowTempOk;
-            const qreal currentDayHighTemp = currentDayDetailDayObject[QStringLiteral("weather")].toObject()
-                                                                      [QStringLiteral("temperature")].toString()
-                                             .toDouble(&currentDayHighTempOk);
-            const bool currentDayDetailValid = updateLastValidDayCache(currentDayDetailDayObject, stationId);
-            if (currentDayHighTempOk && currentDayDetailValid) {
-                currentDay.setNormalHighTemp(currentDayHighTemp);
-            }
-            else if (lastValidDayCache.contains(stationId)) {
-                qWarning(IONENGINE_NMCCN) << "Found invalid day report, using cached value instead...";
-                const QJsonObject cachedDayDetailDayObject = *lastValidDayCache[stationId];
-                const qreal cachedDayHighTemp = cachedDayDetailDayObject[QStringLiteral("weather")].toObject()
-                                                                        [QStringLiteral("temperature")].toString()
-                                                .toDouble();
-                currentDay.setNormalHighTemp(cachedDayHighTemp);
-            }
-            const qreal currentDayLowTemp = currentDayDetail[QStringLiteral("night")].toObject()
-                                                            [QStringLiteral("weather")].toObject()
-                                                            [QStringLiteral("temperature")].toString()
-                                            .toDouble(&currentDayLowTempOk);
-            if (currentDayLowTempOk) {
-                currentDay.setNormalLowTemp(currentDayLowTemp);
-            }
-
             LastDay lastDay;
             QList<qreal> lastDayHourlyTemps;
             for(QJsonValue lastDayHourlyInfo: apiResponseData[QStringLiteral("passedchart")].toArray()) {
@@ -694,7 +668,6 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
             forecast->setMetadata(metaData);
             forecast->setStation(station);
-            forecast->setCurrentDay(currentDay);
             forecast->setLastDay(lastDay);
             forecast->setLastObservation(lastObservation);
             forecast->setFutureDays(futureDays);
