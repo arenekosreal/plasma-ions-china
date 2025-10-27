@@ -94,15 +94,7 @@ But do not forget you can always see source code of `plasma-workspace` or `kdepl
    When you need translate some strings, you can use macro `KDE_WEATHER_TRANSLATION_DOMAIN` with methods like `i18nd` to reuse existing translation from KDE.
    Our default translation domain is `plasma_ions_china`.
 
-7. Add unit test (Optional)
-
-   It is always better if you have unit tests to ensure your ion works well.
-
-   Add a directory with the name same to you created in step 1.
-   Then create `CMakeLists.txt` to define tests.
-   After that, modify [./tests/CMakeLists.txt](./tests/CMakeLists.txt) by adding a new instruction `add_subdirectory("name-of-the-directory")`.
-
-8. Update readme and translation template
+7. Update readme and translation template
 
    You need to update [ions](#ions) table to add information about your ion.
    Translation template can get updated by using commands like `xgettext -o ./po/plasma_ions_china.pot -d plasma_ions_china ...`. 
