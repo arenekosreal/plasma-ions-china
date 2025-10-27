@@ -57,6 +57,7 @@ private:
     QNetworkReply *requestSearchingPlacesApi(const QString &searchString, const int searchLimit = 10);
     QNetworkReply *requestWeatherApi(const QString &stationId, const QString &referer);
     ConditionIcons getWeatherConditionIcon(const QString &img, const bool windy, const bool night) const;
+    WindDirections getWindDirection(const float degree) const;
     QString getWindDirectionString(const float degree) const;
     bool updateWarnInfoCache(const QJsonObject &warnObject, const QString &stationId);
     bool updateLastValidDayCache(const QJsonObject &day, const QString &stationId);

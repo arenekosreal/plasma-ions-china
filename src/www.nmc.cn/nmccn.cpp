@@ -81,63 +81,26 @@ NmcCnIon::ConditionIcons NmcCnIon::getWeatherConditionIcon(const QString &img, c
     return NotAvailable;
 }
 
+NmcCnIon::WindDirections NmcCnIon::getWindDirection(const float degree) const
+{
+    return degree > 0 ? (NmcCnIon::WindDirections)(qRound((degree + 11.25) / 22.5) % 16) : VR;
+}
+
 QString NmcCnIon::getWindDirectionString(const float degree) const
 {
-    if (degree <= 11.25 && degree > 0) {
-        return QStringLiteral("N");
+    const QList<QString> windDirectionStrings = {
+        QStringLiteral("N"), QStringLiteral("NNE"), QStringLiteral("NE"), QStringLiteral("ENE"),
+        QStringLiteral("E"), QStringLiteral("SSE"), QStringLiteral("SE"), QStringLiteral("ESE"),
+        QStringLiteral("S"), QStringLiteral("NNW"), QStringLiteral("NW"), QStringLiteral("WNW"),
+        QStringLiteral("W"), QStringLiteral("SSW"), QStringLiteral("SW"), QStringLiteral("WSW"),
+        QStringLiteral("VR")
+    };
+    const NmcCnIon::WindDirections windDirection = getWindDirection(degree);
+    if (windDirectionStrings.count() > windDirection) {
+        return windDirectionStrings[windDirection];
     }
-    else if (degree <= 33.75 && degree > 11.25) {
-        return QStringLiteral("NNE");
-    }
-    else if (degree <= 56.25 && degree > 33.75) {
-        return QStringLiteral("NE");
-    }
-    else if (degree <= 78.75 && degree > 56.25) {
-        return QStringLiteral("ENE");
-    }
-    else if (degree <= 101.25 && degree > 78.75) {
-        return QStringLiteral("E");
-    }
-    else if (degree <= 123.75 && degree > 101.25) {
-        return QStringLiteral("ESE");
-    }
-    else if (degree <= 146.25 && degree > 123.75) {
-        return QStringLiteral("SE");
-    }
-    else if (degree <= 168.75 && degree > 146.25) {
-        return QStringLiteral("SSE");
-    }
-    else if (degree <= 191.25 && degree > 168.75) {
-        return QStringLiteral("S");
-    }
-    else if (degree <= 213.75 && degree > 191.25) {
-        return QStringLiteral("SSW");
-    }
-    else if (degree <= 236.25 && degree > 213.75) {
-        return QStringLiteral("SW");
-    }
-    else if (degree <= 258.75 && degree > 236.25) {
-        return QStringLiteral("WSW");
-    }
-    else if (degree <= 281.25 && degree > 258.75) {
-        return QStringLiteral("W");
-    }
-    else if (degree <= 303.75 && degree > 281.25) {
-        return QStringLiteral("WNW");
-    }
-    else if (degree <= 326.25 && degree > 303.75) {
-        return QStringLiteral("NW");
-    }
-    else if (degree <= 348.75 && degree > 326.25) {
-        return QStringLiteral("NNW");
-    }
-    else if (degree <= 360 && degree > 348.75) {
-        return QStringLiteral("N");
-    }
-    else {
-        qWarning(IONENGINE_NMCCN) << "Invalid degree:" << degree;
-        return QStringLiteral("VR");
-    }
+    qWarning(IONENGINE_NMCCN) << "Invalid degree:" << degree;
+    return QStringLiteral("VR");
 }
 
 QNetworkReply *NmcCnIon::requestSearchingPlacesApi(const QString &searchString, const int searchLimit)
