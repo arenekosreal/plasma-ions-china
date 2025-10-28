@@ -84,13 +84,11 @@ public Q_SLOTS:
 #else // ION_LEGACY
 
 private:
-    std::shared_ptr<QPromise<std::shared_ptr<Locations>>> locationsPromise;
-    std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> forecastPromise;
     Warnings::PriorityClass getWarnPriority(const QString &signallevel) const;
 
 private Q_SLOTS:
-    void onSearchApiRequestFinished(QNetworkReply *reply);
-    void onWeatherApiRequestFinished(QNetworkReply *reply, const QString &extra, const bool &setNewPlaceInfo);
+    void onSearchApiRequestFinished(QNetworkReply *reply, std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise);
+    void onWeatherApiRequestFinished(QNetworkReply *reply, std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &extra, const bool setNewPlaceInfo);
 
 // IonInterface API
 public:

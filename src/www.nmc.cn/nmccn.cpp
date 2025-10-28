@@ -467,9 +467,9 @@ Warnings::PriorityClass NmcCnIon::getWarnPriority(const QString &signallevel) co
     return priorityMaps.contains(signallevel) ? priorityMaps[signallevel] : Warnings::Low;
 }
 
-void NmcCnIon::onSearchApiRequestFinished(QNetworkReply* reply)
+void NmcCnIon::onSearchApiRequestFinished(QNetworkReply* reply, std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise)
 {
-    if (locationsPromise->isCanceled()) {
+    if (promise->isCanceled()) {
         qDebug(IONENGINE_NMCCN) << "Searching locations is cancelled.";
     }
     else {
@@ -505,15 +505,15 @@ void NmcCnIon::onSearchApiRequestFinished(QNetworkReply* reply)
             locations->addLocation(location);
         }
         qDebug(IONENGINE_NMCCN) << "Returning locations" << locations.get();
-        locationsPromise->addResult(locations);
+        promise->addResult(locations);
     }
-    locationsPromise->finish();
-    locationsPromise.reset();
+    promise->finish();
+    promise.reset();
 }
 
-void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &extra, const bool &setNewPlaceInfo)
+void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &extra, const bool setNewPlaceInfo)
 {
-    if (forecastPromise->isCanceled()) {
+    if (promise->isCanceled()) {
         qDebug(IONENGINE_NMCCN) << "Getting forecast is cancelled.";
     }
     else {
@@ -667,11 +667,11 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, const QString &
             forecast->setFutureDays(futureDays);
             forecast->setWarnings(warnings);
             qDebug(IONENGINE_NMCCN) << "Returning forecast" << forecast.get();
-            forecastPromise->addResult(forecast);
+            promise->addResult(forecast);
         }
     }
-    forecastPromise->finish();
-    forecastPromise.reset();
+    promise->finish();
+    promise.reset();
 }
 
 void NmcCnIon::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &searchString)
@@ -683,9 +683,8 @@ void NmcCnIon::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> 
         return;
     }
     qDebug(IONENGINE_NMCCN) << "Finding place" << searchString << "...";
-    locationsPromise = promise;
     connect(&networkAccessManager, &QNetworkAccessManager::finished,
-            this, &NmcCnIon::onSearchApiRequestFinished,
+            this, [=](QNetworkReply* reply) {this->onSearchApiRequestFinished(reply, promise);},
             networkAccessManagerSlotConnectionType);
     requestSearchingPlacesApi(searchString);
 }
@@ -699,7 +698,6 @@ void NmcCnIon::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
         return;
     }
     qDebug(IONENGINE_NMCCN) << "Fetching weather for place" << placeInfo << "...";
-    forecastPromise = promise;
     const bool placeInfoIsLegacy = placeInfo.contains(QLatin1Char(placeInfoSep));
     // id|refererPath|lon|lat
     const QString extra = placeInfoIsLegacy ? placeInfo.split(QLatin1Char(placeInfoSep))[3] : placeInfo;
@@ -707,7 +705,7 @@ void NmcCnIon::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
     const QString stationId = extraParts[0];
     const QString creditPage = QStringLiteral(FORECAST_CITY_PAGE) + extraParts[1];
     connect(&networkAccessManager, &QNetworkAccessManager::finished,
-            this, [=](QNetworkReply* reply){this->onWeatherApiRequestFinished(reply, extra, placeInfoIsLegacy);},
+            this, [=](QNetworkReply* reply){this->onWeatherApiRequestFinished(reply, promise, extra, placeInfoIsLegacy);},
             networkAccessManagerSlotConnectionType);
     requestWeatherApi(stationId, creditPage);
 }
