@@ -504,7 +504,6 @@ void NmcCnIon::onSearchApiRequestFinished(QNetworkReply* reply, std::shared_ptr<
             qDebug(IONENGINE_NMCCN) << "Adding location" << location.displayName();
             locations->addLocation(location);
         }
-        qDebug(IONENGINE_NMCCN) << "Returning locations" << locations.get();
         promise->addResult(locations);
     }
     promise->finish();
@@ -666,7 +665,6 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr
             forecast->setLastObservation(lastObservation);
             forecast->setFutureDays(futureDays);
             forecast->setWarnings(warnings);
-            qDebug(IONENGINE_NMCCN) << "Returning forecast" << forecast.get();
             promise->addResult(forecast);
         }
     }
