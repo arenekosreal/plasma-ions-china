@@ -1,5 +1,5 @@
 set(NMCCN_ION_NAME nmccn)
-if(PlasmaWeatherIon_LEGACY)
+if(PlasmaWeather_Ion_LEGACY)
     message(WARNING "No maintainer is using KDE < 6.5 so the legacy version is unmaintained now.")
     set(NMCCN_TARGET_NAME plasma_engine_${NMCCN_ION_NAME})
     set(LOGGING_CATEGORY_NAME kde.dataengine.ion.nmccn)
@@ -25,7 +25,7 @@ ecm_qt_declare_logging_category(${NMCCN_TARGET_NAME}
 
 find_package(Qt${QT_MAJOR_VERSION} ${QT_MIN_VERSION} REQUIRED COMPONENTS Core Network)
 target_link_libraries(${NMCCN_TARGET_NAME}
-                      PRIVATE PlasmaWeather::Ion
+                      PRIVATE Plasma::Weather::Ion
                               Qt::Core
                               Qt::Network
                               KF${QT_MAJOR_VERSION}::UnitConversion
