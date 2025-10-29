@@ -21,13 +21,18 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 3. Build and install the project:
 
    ```bash
-   cmake -B build -S "/path/to/plasma-ions-china"
+   cmake -B build -S "/path/to/plasma-ions-china \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DPlasmaWeather_ROOT=/path/to/plasma-ions-china"
    cmake --build  build
    cmake --install build
    ```
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    So it is strongly recommended that you should create a package for your Linux Distribution.
    Because you do not want to mix files managed by package manager and yourself.
+
+   Setting `PlasmaWeather_ROOT` is required due to that kdeplasma-addons does not provide headers for `libplasmaweatherion.so` and `libplasmaweatherdata.so`.
+   If you find your Linux Distribution provides those headers with filesystem hierarchy like [include](./include), it can be omitted.
 
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
 
