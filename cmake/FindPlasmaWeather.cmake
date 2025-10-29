@@ -5,7 +5,8 @@ if(QT_MAJOR_VERSION LESS 6)
     message(FATAL_ERROR "Qt < 6 is not supported.")
 endif()
 
-set(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION 6.4.5) # 6.4.5 is the last version using DataEngine.
+set(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION 6.4.5) # 6.4.5 is the last KDE6 version using DataEngine.
+set(_PLASMA_WEATHER_QT_MIN_VERSION 6.5.0) # 6.5.0 is the first used Qt6 version of KDE6.
 
 include(FindPackageHandleStandardArgs)
 find_package_check_version("${_PLASMA_WEATHER_DATAENGINE_LAST_VERSION}" _PLASMA_WEATHER_LEGACY_ALLOWED
@@ -20,7 +21,7 @@ if(_PLASMA_WEATHER_ION_INCLUDE_ROOT AND _PLASMA_WEATHER_ION_LIBRARY)
     find_library(_PLASMA_WEATHER_DATA_LIBRARY "plasmaweatherdata" REQUIRED)
     cmake_path(ABSOLUTE_PATH _PLASMA_WEATHER_DATA_INCLUDE_ROOT)
     cmake_path(ABSOLUTE_PATH _PLASMA_WEATHER_DATA_LIBRARY)
-    find_package(Qt${QT_MAJOR_VERSION} COMPONENTS Qml REQUIRED)
+    find_package(Qt${QT_MAJOR_VERSION} ${_PLASMA_WEATHER_QT_MIN_VERSION} COMPONENTS Qml REQUIRED)
     add_library(PlasmaWeather::Data SHARED IMPORTED GLOBAL)
     set_target_properties(PlasmaWeather::Data
                           PROPERTIES IMPORTED_LOCATION "${_PLASMA_WEATHER_DATA_LIBRARY}"
@@ -122,7 +123,7 @@ find_package_handle_standard_args(PlasmaWeather
                                   HANDLE_VERSION_RANGE
                                   HANDLE_COMPONENTS)
 
-mark_as_advanced(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION _PLASMA_WEATHER_LEGACY_ALLOWED
+mark_as_advanced(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION _PLASMA_WEATHER_LEGACY_ALLOWED _PLASMA_WEATHER_QT_MIN_VERSION
                  _PLASMA_WEATHER_ION_INCLUDE_ROOT _PLASMA_WEATHER_ION_LIBRARY
                  _PLASMA_WEATHER_DATA_INCLUDE_ROOT _PLASMA_WEATHER_DATA_LIBRARY
                  _PLASMA_WEATHER_DATA_LIBRARY_REAL_PATH _PLASMA_WEATHER_DATA_VERSION
