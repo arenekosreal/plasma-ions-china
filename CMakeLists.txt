@@ -5,25 +5,22 @@ project(plasma-ions-china
         HOMEPAGE_URL "https://github.com/arenekosreal/plasma-ions-china"
         LANGUAGES CXX)
 
-if(NOT "${PROJECT_VERSION}")
-    set(PROJECT_VERSION_FALLBACK 0.1.0)
+if(NOT PROJECT_VERSION)
     find_package(Git)
-    if (${Git_FOUND})
+    if (Git_FOUND)
         execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tags --always
                         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
                         OUTPUT_VARIABLE GIT_TAG
                         OUTPUT_STRIP_TRAILING_WHITESPACE
                         RESULT_VARIABLE GIT_RESULT
                         ERROR_QUIET)
-        if (${GIT_RESULT} EQUAL 0 AND ${GIT_TAG} MATCHES "^v[0-9]+\.[0-9]+\.[0-9]+")
+        if (GIT_RESULT EQUAL 0 AND GIT_TAG MATCHES "^v[0-9]+\\.[0-9]+\\.[0-9]+")
             string(REGEX REPLACE "^v([0-9]+\\.[0-9]+\\.[0-9]+)" "\\1" PROJECT_VERSION "${GIT_TAG}")
             message("Extracted project version ${PROJECT_VERSION} from git tag.")
-        else()
-            set(PROJECT_VERSION "${PROJECT_VERSION_FALLBACK}")
-            message(WARNING "Failed to execute git to get tag of repository. Using fallback value ${PROJECT_VERSION} instead.")
         endif()
-    else()
-        set(PROJECT_VERSION "${PROJECT_VERSION_FALLBACK}")
+    endif()
+    if(NOT PROJECT_VERSION)
+        set(PROJECT_VERSION 0.1.0)
         message(WARNING "Failed to find git to get tag of repository. Using fallback value ${PROJECT_VERSION} instead.")
     endif()
 endif()
