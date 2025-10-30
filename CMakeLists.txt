@@ -16,7 +16,7 @@ if(NOT "${PROJECT_VERSION}")
                         RESULT_VARIABLE GIT_RESULT
                         ERROR_QUIET)
         if (${GIT_RESULT} EQUAL 0 AND ${GIT_TAG} MATCHES "^v[0-9]+\.[0-9]+\.[0-9]+")
-            string(REGEX REPLACE "^v([0-9]+\.[0-9]+\.[0-9]+)" "\1" PROJECT_VERSION "${GIT_TAG}")
+            string(REGEX REPLACE "^v([0-9]+\\.[0-9]+\\.[0-9]+)" "\\1" PROJECT_VERSION "${GIT_TAG}")
             message("Extracted project version ${PROJECT_VERSION} from git tag.")
         else()
             set(PROJECT_VERSION "${PROJECT_VERSION_FALLBACK}")
