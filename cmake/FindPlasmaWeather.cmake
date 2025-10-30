@@ -1,12 +1,12 @@
+set(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION 6.4.5) # 6.4.5 is the last KDE6 version using DataEngine.
+set(_PLASMA_WEATHER_QT_MIN_VERSION 6.5.0) # 6.5.0 is the first used Qt6 version of KDE6.
+
 if(NOT QT_MAJOR_VERSION)
-    set(QT_MAJOR_VERSION 6)
+    string(REGEX REPLACE "^([0-9]+)\\." "\\1" QT_MAJOR_VERSION "${_PLASMA_WEATHER_QT_MIN_VERSION}")
 endif()
 if(QT_MAJOR_VERSION LESS 6)
     message(FATAL_ERROR "Qt < 6 is not supported.")
 endif()
-
-set(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION 6.4.5) # 6.4.5 is the last KDE6 version using DataEngine.
-set(_PLASMA_WEATHER_QT_MIN_VERSION 6.5.0) # 6.5.0 is the first used Qt6 version of KDE6.
 
 include(FindPackageHandleStandardArgs)
 
