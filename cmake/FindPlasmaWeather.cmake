@@ -7,8 +7,15 @@ endif()
 if(QT_MAJOR_VERSION LESS 6)
     message(FATAL_ERROR "Qt < 6 is not supported.")
 endif()
+if(NOT PlasmaWeather_FIND_COMPONENTS)
+    list(APPEND PlasmaWeather_FIND_COMPONENTS Ion)
+    if(PlasmaWeather_FIND_REQUIRED)
+        set(PlasmaWeather_FIND_REQUIRED_Ion TRUE)
+    endif()
+endif()
 
 include(FindPackageHandleStandardArgs)
+
 
 # plasma_weather_target(COMPONENT <component-name> HEADER <header> LIBRARY <library> [REQUIRED])
 # Create a target based on component name.
@@ -67,7 +74,7 @@ find_package_check_version("${_PLASMA_WEATHER_DATAENGINE_LAST_VERSION}" _PLASMA_
                            HANDLE_VERSION_RANGE)
 
 if(Ion IN_LIST "${PlasmaWeather_FIND_COMPONENTS}" OR PlasmaWeather_FIND_REQUIRED_Ion)
-    plasma_weather_target(COMPONENT Ion HEADER "plasma/weatherion/ion.h" LIBRARY "plasmaweatherion" $<$<NOT:$<_PLASMA_WEATHER_LEGACY_ALLOWED>>:REQUIRED>)
+    plasma_weather_target(COMPONENT Ion HEADER "plasma/weather/ion.h" LIBRARY "plasmaweatherion" $<$<NOT:$<_PLASMA_WEATHER_LEGACY_ALLOWED>>:REQUIRED>)
     if(TARGET Plasma::Weather::Ion)
         set(PlasmaWeather_Ion_LEGACY FALSE)
         set(PlasmaWeather_FIND_REQUIRED_Data TRUE)
@@ -100,7 +107,7 @@ if(IonLegacy IN_LIST "${PlasmaWeather_FIND_COMPONENTS}" OR PlasmaWeather_FIND_RE
 endif()
 
 if(Data IN_LIST "${PlasmaWeather_FIND_COMPONENTS}" OR PlasmaWeather_FIND_REQUIRED_Data)
-    plasma_weather_target(COMPONENT Data HEADER "plasma/weatherdata/plasmaweatherdata_export.h" LIBRARY "plasmaweatherdata" $<PlasmaWeather_FIND_REQUIRED_Data:REQUIRED>)
+    plasma_weather_target(COMPONENT Data HEADER "plasma/weather/plasmaweatherdata_export.h" LIBRARY "plasmaweatherdata" $<PlasmaWeather_FIND_REQUIRED_Data:REQUIRED>)
     if(TARGET Plasma::Weather::Data)
         find_package(Qt${QT_MAJOR_VERSION} ${_PLASMA_WEATHER_QT_MIN_VERSION} COMPONENTS Qml REQUIRED)
         target_link_libraries(Plasma::Weather::Data INTERFACE Qt::Qml)
