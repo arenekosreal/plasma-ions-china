@@ -1,7 +1,7 @@
 # Plasma Weather China Sources
 
-![Search Weather Station](./image/search.png)
-![Weather Report Page](./image/weather.png)
+<img src="./image/search.png" alt="Search Weather Station" height="200" />
+<img src="./image/weather.png" alt="Weather Report Page" height="200" />
 
 A collection of ions for Chinese users.
 
