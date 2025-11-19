@@ -2,8 +2,8 @@
 
 <p align="center">
    <br>
-   <img src="./image/search.png" alt="Search Weather Station" height="100" />
-   <img src="./image/weather.png" alt="Weather Report Page" height="100" />
+   <img src="./image/search.png" alt="Search Weather Station" height="300" />
+   <img src="./image/weather.png" alt="Weather Report Page" height="300" />
    <br>
 </p>
 
