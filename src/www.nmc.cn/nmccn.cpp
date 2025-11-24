@@ -458,13 +458,13 @@ K_PLUGIN_CLASS_WITH_JSON(NmcCnIon, "metadata.json");
 
 Warnings::PriorityClass NmcCnIon::getWarnPriority(const QString &signallevel) const
 {
-    QMap<QString, Warnings::PriorityClass> priorityMaps = {
+    const QMap<QString, Warnings::PriorityClass> priorityMaps = {
         {QStringLiteral("蓝色"), Warnings::Low},
         {QStringLiteral("黄色"), Warnings::Medium},
         {QStringLiteral("橙色"), Warnings::High},
         {QStringLiteral("红色"), Warnings::Extreme},
     };
-    return priorityMaps.contains(signallevel) ? priorityMaps[signallevel] : Warnings::Low;
+    return priorityMaps.value(signallevel, Warnings::Low);
 }
 
 void NmcCnIon::onSearchApiRequestFinished(QNetworkReply* reply, std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise)

@@ -7,7 +7,6 @@
 #include <QNetworkReply>
 
 #include <ion.h>
-#include <qnamespace.h>
 #ifndef ION_LEGACY
 typedef Ion IonInterface;
 #endif // ION_LEGACY
