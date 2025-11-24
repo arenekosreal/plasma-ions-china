@@ -353,13 +353,13 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &
             }
             const QJsonObject dayWeather = day[QStringLiteral("weather")].toObject();
             const QJsonObject dayWind = day[QStringLiteral("wind")].toObject();
-            const double dayWeatherTemperature = dayWeather[QStringLiteral("temperature")].toString().toDouble();
+            const int dayWeatherTemperature = dayWeather[QStringLiteral("temperature")].toString().toInt();
             const QString dayWeatherIcon = getWeatherIcon(getWeatherConditionIcon(dayWeather[QStringLiteral("img")].toString(), false, false));
 
             const QJsonObject night = detailObject[QStringLiteral("night")].toObject();
             const QJsonObject nightWeather = night[QStringLiteral("weather")].toObject();
             const QJsonObject nightWind = night[QStringLiteral("wind")].toObject();
-            const double nightWeatherTemperature = nightWeather[QStringLiteral("temperature")].toString().toDouble();
+            const int nightWeatherTemperature = nightWeather[QStringLiteral("temperature")].toString().toInt();
             const QString nightWeatherIcon = getWeatherIcon(getWeatherConditionIcon(nightWeather[QStringLiteral("img")].toString(), false, true));
 
             const QString detailTitle =
@@ -610,14 +610,14 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr
                 FutureForecast daytimeForecast;
                 daytimeForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(day[QStringLiteral("img")].toString(), false, false)));
                 daytimeForecast.setCondition(day[QStringLiteral("info")].toString());
-                daytimeForecast.setHighTemp(day[QStringLiteral("temperature")].toString().toDouble());
+                daytimeForecast.setHighTemp(day[QStringLiteral("temperature")].toString().toInt());
                 todayDayForecast.setDaytime(daytimeForecast);
             }
             const QJsonObject night = currentDayDetail[QStringLiteral("night")].toObject()[QStringLiteral("weather")].toObject();
             FutureForecast nightForecast;
             nightForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(night[QStringLiteral("img")].toString(), false, true)));
             nightForecast.setCondition(night[QStringLiteral("info")].toString());
-            nightForecast.setLowTemp(night[QStringLiteral("temperature")].toString().toDouble());
+            nightForecast.setLowTemp(night[QStringLiteral("temperature")].toString().toInt());
             todayDayForecast.setNight(nightForecast);
             futureDays->addDay(todayDayForecast);
             if (detail.count() > 1) {
@@ -632,13 +632,13 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr
                     FutureForecast dayForecast;
                     dayForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(day[QStringLiteral("img")].toString(), false, false)));
                     dayForecast.setCondition(day[QStringLiteral("info")].toString());
-                    dayForecast.setHighTemp(day[QStringLiteral("temperature")].toString().toDouble());
+                    dayForecast.setHighTemp(day[QStringLiteral("temperature")].toString().toInt());
                     futureDayForecast.setDaytime(dayForecast);
                     const QJsonObject night = detailObject[QStringLiteral("night")].toObject()[QStringLiteral("weather")].toObject();
                     FutureForecast nightForecast;
                     nightForecast.setConditionIcon(getWeatherIcon(getWeatherConditionIcon(night[QStringLiteral("img")].toString(), false, true)));
                     nightForecast.setCondition(night[QStringLiteral("info")].toString());
-                    nightForecast.setLowTemp(night[QStringLiteral("temperature")].toString().toDouble());
+                    nightForecast.setLowTemp(night[QStringLiteral("temperature")].toString().toInt());
                     futureDayForecast.setNight(nightForecast);
                     qDebug(IONENGINE_NMCCN) << "Added future day forecast weekday" << futureDayForecast.weekDay() << "with monthday" << futureDayForecast.monthDay();
                     futureDays->addDay(futureDayForecast);
