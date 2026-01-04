@@ -42,9 +42,7 @@ T NmcCnIon::handleNetworkReply(QNetworkReply *reply, std::function<T(QNetworkRep
         qDebug(IONENGINE_NMCCN) << "Request successfully.";
         return callable(reply);
     }
-    else {
-        qFatal(IONENGINE_NMCCN) << "Request failed with error: " << reply->error();
-    }
+    qWarning(IONENGINE_NMCCN) << "Request failed with error: " << reply->error();
     T ret;
     return ret;
 };
@@ -150,10 +148,10 @@ QJsonArray NmcCnIon::extractSearchApiResponse(QNetworkReply *reply)
         case 0:
             return responseObject[QStringLiteral("data")].toArray();
         case -1:
-            qFatal(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+            qWarning(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
             break;
         default:
-            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
+            qWarning(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
             break;
     }
     QJsonArray ret;
@@ -169,10 +167,10 @@ QJsonObject NmcCnIon::extractWeatherApiResponse(QNetworkReply *reply)
         case 0:
             return responseObject[QStringLiteral("data")].toObject();
         case -1:
-            qFatal(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
+            qWarning(IONENGINE_NMCCN) << "Failed to parse json at" << error.offset << "because:" << error.errorString();
             break;
         default:
-            qFatal(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
+            qWarning(IONENGINE_NMCCN) << "API response invalid:" << responseObject[QStringLiteral("msg")].toString();
             break;
     }
     QJsonObject ret;
