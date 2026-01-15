@@ -295,6 +295,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &
         data->insert(QStringLiteral("Credit"), i18n("Source: National Meteorological Center of China"));
         data->insert(QStringLiteral("Credit Url"), creditUrl);
         data->insert(QStringLiteral("Country"), i18n( "China"));
+        const QJsonArray passedchart = apiResponseData[QStringLiteral("passedchart")].toArray();
         const QJsonObject real = apiResponseData[QStringLiteral("real")].toObject();
         const QJsonObject station = real[QStringLiteral("station")].toObject();
         const QString stationId = station[QStringLiteral("code")].toString();
@@ -321,7 +322,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply *reply, const QString &
         data->insert(QStringLiteral("Wind Speed"), wind[QStringLiteral("speed")].toDouble());
         data->insert(QStringLiteral("Wind Speed Unit"), KUnitConversion::MeterPerSecond);
         data->insert(QStringLiteral("Humidity"), weather[QStringLiteral("humidity")].toInt());
-        data->insert(QStringLiteral("Pressure"), weather[QStringLiteral("airpressure")].toInt());
+        data->insert(QStringLiteral("Pressure"), passedchart.first().toObject()[QStringLiteral("pressure")].toDouble());
         data->insert(QStringLiteral("Pressure Unit"), KUnitConversion::Hectopascal);
         data->insert(QStringLiteral("Sunrise At"), sunrise.time());
         data->insert(QStringLiteral("Sunset At"), sunset.time());
@@ -519,6 +520,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr
         QJsonObject apiResponseData = handleNetworkReply(reply, wrapper);
         qDebug(IONENGINE_NMCCN) << "Deserialized data json object:" << apiResponseData;
         if (!apiResponseData.isEmpty()) {
+            const QJsonArray passedchart = apiResponseData[QStringLiteral("passedchart")].toArray();
             const QJsonObject real = apiResponseData[QStringLiteral("real")].toObject();
             const QJsonObject station_ = real[QStringLiteral("station")].toObject();
 
@@ -579,7 +581,7 @@ void NmcCnIon::onWeatherApiRequestFinished(QNetworkReply* reply, std::shared_ptr
             lastObservation.setHumidex(std::round(weather[QStringLiteral("feelst")].toDouble()));
             lastObservation.setWindSpeed(windSpeed);
             lastObservation.setWindDirection(getWindDirectionString(wind[QStringLiteral("degree")].toDouble()));
-            lastObservation.setPressure(weather[QStringLiteral("airpressure")].toDouble());
+            lastObservation.setPressure(passedchart.first().toObject()[QStringLiteral("pressure")].toDouble());
             lastObservation.setHumidity(weather[QStringLiteral("humidity")].toDouble());
 
             const QJsonObject predict = apiResponseData[QStringLiteral("predict")].toObject();
