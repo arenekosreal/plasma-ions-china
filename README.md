@@ -92,7 +92,7 @@ We take `nmccn` as an example here about how to add a new ion:
 
 4. Create `CMakeLists.txt` for your directories.
 
-   Directories created at step 2 are added only when they have a `CMakeLists.txt` file.
+   Directories created at step above are added only when they have a `CMakeLists.txt` file.
    You must create a target which name is the directory in the file.
    For example, [`nmccn/CMakeLists.txt`](./src/nmccn/CMakeLists.txt) will create a target named `nmccn`,
    while [`plasma_engine_nmccn/CMakeLists.txt`](./src/plasma_engine_nmccn/CMakeLists.txt) will create a target named `plasma_engine_nmccn`.
