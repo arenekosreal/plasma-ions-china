@@ -9,9 +9,13 @@ if(GETTEXT_XGETTEXT_EXECUTABLE)
                      PRE_BUILD
                      COMMAND "${GETTEXT_XGETTEXT_EXECUTABLE}"
                              --c++
+                             --from-code=utf-8
+                             --qt
                              --output="${CMAKE_CURRENT_SOURCE_DIR}/po/${TRANSLATION_DOMAIN}.pot"
                              --default-domain="${TRANSLATION_DOMAIN}"
                              --keyword=i18n
+                             --package-name="${PROJECT_NAME}"
+                             --package-version="${PROJECT_VERSION}"
                              ${CPP_FILES}
                      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                      COMMENT "Updating ${CMAKE_CURRENT_SOURCE_DIR}/po/${TRANSLATION_DOMAIN}.pot...")
@@ -28,7 +32,7 @@ if(GETTEXT_MSGMERGE_EXECUTABLE)
                            PRE_BUILD
                            COMMAND "${GETTEXT_MSGMERGE_EXECUTABLE}" "${PO_FILE}"
                                    "${CMAKE_CURRENT_SOURCE_DIR}/po/${TRANSLATION_DOMAIN}.pot"
-                                   --output="${PO_FILE}"
+                                   --update
                            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                            COMMENT "Updating ${CMAKE_CURRENT_SOURCE_DIR}/${PO_FILE}...")
     endforeach()
