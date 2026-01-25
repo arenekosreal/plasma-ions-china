@@ -176,9 +176,11 @@ We take `nmccn` as an example here about how to add a new ion:
 
    We use gettext to provide a localized user interface.
    You need to run command like `xgettext -o po/plasma_ions_china.pot -d plasma_ions_china -C -ki18n src/**/*.cpp` to update translation template.
+   If you are familiar with some languages, it is also recommended to update the corresponding `po` files.
+
    We have also added 2 cmake targets: `update-pot` and `update-po` to update them accordingly.
    Feel free to use `cmake --build <build-dir> --target <target-name>` to let cmake generate updated translation files.
-   If you are familiar with some languages, it is also recommended to update the corresponding `po` files.
+   But they just update existing files, you still have to work manually if you are going to translate for a new locale.
 
 8. Update documentation
 
