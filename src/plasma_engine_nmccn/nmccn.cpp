@@ -110,34 +110,29 @@ bool NmcCn::updateIonSource(const QString &source)
                         data.insert(QStringLiteral("Credit Url"), referer);
                         data.insert(QStringLiteral("Country"), i18n("China"));
 
-                        const QJsonObject real = object[QStringLiteral("real")].toObject();
-                        const QJsonObject station = object[QStringLiteral("station")].toObject();
-                        const QJsonArray passedchart = object[QStringLiteral("passedchart")].toArray();
-                        data.insert(QStringLiteral("Place"), station[QStringLiteral("city")].toString());
-                        data.insert(QStringLiteral("Region"), station[QStringLiteral("province")].toString());
-                        data.insert(QStringLiteral("Station"), station[QStringLiteral("city")].toString());
-                        data.insert(QStringLiteral("Observation Period"), real[QStringLiteral("publish_time")].toString());
-                        const QJsonObject sunriseSunset = real[QStringLiteral("sunriseSunset")].toObject(),
-                                          weather = real[QStringLiteral("weather")].toObject(), wind = real[QStringLiteral("wind")].toObject();
-                        const QDateTime sunrise = QDateTime::fromString(sunriseSunset[QStringLiteral("sunrise")].toString(), fullTimeFormat),
-                                        sunset = QDateTime::fromString(sunriseSunset[QStringLiteral("sunset")].toString(), fullTimeFormat),
+                        data.insert(QStringLiteral("Place"), object[QStringLiteral("station")][QStringLiteral("city")].toString());
+                        data.insert(QStringLiteral("Region"), object[QStringLiteral("station")][QStringLiteral("province")].toString());
+                        data.insert(QStringLiteral("Station"), object[QStringLiteral("station")][QStringLiteral("city")].toString());
+                        data.insert(QStringLiteral("Observation Period"), object[QStringLiteral("real")][QStringLiteral("publish_time")].toString());
+                        const QDateTime sunrise = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(), fullTimeFormat),
+                                        sunset = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(), fullTimeFormat),
                                         now = QDateTime::currentDateTime();
-                        const qreal windSpeed = wind[QStringLiteral("speed")].toDouble();
+                        const qreal windSpeed = object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble();
                         const bool currentIsNight = sunset <= now || now < sunrise,
                                    currentIsWindy = windSpeed > 1.6; // wind faster than 1.6m/s means windy(to human)
                         const ConditionIcons conditionIcon =
-                            this->getWeatherConditionIcon(weather[QStringLiteral("img")].toString(), currentIsWindy, currentIsNight);
+                            this->getWeatherConditionIcon(object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("img")].toString(), currentIsWindy, currentIsNight);
                         data.insert(QStringLiteral("Condition Icon"), this->getWeatherIcon(conditionIcon));
-                        data.insert(QStringLiteral("Current Conditions"), weather[QStringLiteral("info")].toString());
-                        data.insert(QStringLiteral("Temperature"), weather[QStringLiteral("temperature")].toDouble());
-                        data.insert(QStringLiteral("Windchill"), weather[QStringLiteral("feelst")].toDouble());
-                        data.insert(QStringLiteral("Humidex"), weather[QStringLiteral("feelst")].toDouble());
+                        data.insert(QStringLiteral("Current Conditions"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("info")].toString());
+                        data.insert(QStringLiteral("Temperature"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("temperature")].toDouble());
+                        data.insert(QStringLiteral("Windchill"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("feelst")].toDouble());
+                        data.insert(QStringLiteral("Humidex"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("feelst")].toDouble());
                         data.insert(QStringLiteral("Wind Direction"),
-                                    this->getWindDirection(this->getWindDirection(wind[QStringLiteral("degree")].toDouble())));
-                        data.insert(QStringLiteral("Wind Speed"), wind[QStringLiteral("speed")].toDouble());
+                                    this->getWindDirection(this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble())));
+                        data.insert(QStringLiteral("Wind Speed"), object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble());
                         data.insert(QStringLiteral("Wind Speed Unit"), KUnitConversion::MeterPerSecond);
-                        data.insert(QStringLiteral("Humidity"), weather[QStringLiteral("humidity")].toInt());
-                        data.insert(QStringLiteral("Pressure"), passedchart.first()[QStringLiteral("pressure")].toDouble());
+                        data.insert(QStringLiteral("Humidity"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("humidity")].toInt());
+                        data.insert(QStringLiteral("Pressure"), object[QStringLiteral("passedchart")].toArray().first()[QStringLiteral("pressure")].toDouble());
                         data.insert(QStringLiteral("Pressure Unit"), KUnitConversion::Hectopascal);
                         data.insert(QStringLiteral("Sunrise At"), sunrise.time());
                         data.insert(QStringLiteral("Sunset At"), sunset.time());
@@ -199,10 +194,10 @@ bool NmcCn::updateIonSource(const QString &source)
                             }
                         }
                         data.insert(QStringLiteral("Total Weather Days"), details.count());
-                        const QString alert = real[QStringLiteral("warn")][QStringLiteral("alert")].toString(),
-                                      urlPath = real[QStringLiteral("warn")][QStringLiteral("url")].toString();
+                        const QString alert = object[QStringLiteral("real")][QStringLiteral("warn")][QStringLiteral("alert")].toString(),
+                                      urlPath = object[QStringLiteral("real")][QStringLiteral("warn")][QStringLiteral("url")].toString();
                         if (alert != invalidValue && urlPath != invalidValue) {
-                            qDebug(IONENGINE_NMCCN) << "Found active warning" << real[QStringLiteral("warn")].toObject();
+                            qDebug(IONENGINE_NMCCN) << "Found active warning" << object[QStringLiteral("real")][QStringLiteral("warn")].toObject();
                             const QString url = apiBase + urlPath;
                             data.insert(QStringLiteral("Warning Description 0"), alert);
                             data.insert(QStringLiteral("Warning Info 0"), url);

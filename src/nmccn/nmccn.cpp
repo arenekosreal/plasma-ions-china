@@ -58,7 +58,6 @@ void NmcCn::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> pro
                     const QString placeDisplayName = QStringLiteral("%1-%2").arg(searchResultParts[2]).arg(searchResultParts[1]);
                     bool lonOk, latOk;
                     const qreal lon = searchResultParts[4].toDouble(&lonOk), lat = searchResultParts[5].toDouble(&latOk);
-                    const QStringList placeInfoParts = {searchResultParts[0], searchResultParts[3]};
                     Location location;
                     location.setStation(placeId);
                     location.setCode(placeId);
@@ -115,10 +114,6 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                 [=](const QJsonObject &object) {
                     std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
 
-                    const QJsonObject real = object[QStringLiteral("real")].toObject();
-                    const QJsonObject station = object[QStringLiteral("station")].toObject();
-                    const QJsonArray passedchart = object[QStringLiteral("passedchart")].toArray();
-
                     MetaData metaData;
                     metaData.setCredit(i18n("Source: National Meteorological Center of China"));
                     metaData.setCreditURL(referer);
@@ -128,21 +123,21 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     metaData.setRainfallUnit(KUnitConversion::Millimeter);
                     forecast->setMetadata(metaData);
 
-                    Station station_;
-                    station_.setStation(station[QStringLiteral("city")].toString());
-                    station_.setPlace(station[QStringLiteral("city")].toString());
-                    station_.setRegion(station[QStringLiteral("province")].toString());
-                    station_.setCountry(i18n("China"));
-                    // TODO: station_.setNewPlaceInfo(const QString&)
+                    Station station;
+                    station.setStation(object[QStringLiteral("station")][QStringLiteral("city")].toString());
+                    station.setPlace(object[QStringLiteral("station")][QStringLiteral("city")].toString());
+                    station.setRegion(object[QStringLiteral("station")][QStringLiteral("province")].toString());
+                    station.setCountry(i18n("China"));
                     bool lonOk, latOk;
                     const qreal lon = placeInfoParts[4].toDouble(&lonOk), lat = placeInfoParts[5].toDouble(&latOk);
                     if (lonOk && latOk) {
-                        station_.setCoordinates(lon, lat);
+                        station.setCoordinates(lon, lat);
                     }
-                    forecast->setStation(station_);
+                    forecast->setStation(station);
 
                     LastDay lastDay;
                     LastObservation lastObservation;
+                    const QJsonArray passedchart = object[QStringLiteral("passedchart")].toArray();
                     if (passedchart.count() > 0) {
                         for (const QJsonValue &value : passedchart) {
                             const qreal temperature = value[QStringLiteral("temperature")].toDouble();
@@ -156,18 +151,13 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                         const qreal pressure = passedchart.first()[QStringLiteral("pressure")].toDouble();
                         lastObservation.setPressure(pressure);
                     }
-                    lastObservation.setObservationTimestamp(QDateTime::fromString(real[QStringLiteral("publish_time")].toString(), fullTimeFormat));
-                    const QJsonObject weather = real[QStringLiteral("weather")].toObject();
+                    lastObservation.setObservationTimestamp(QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("publish_time")].toString(), fullTimeFormat));
+                    const QJsonObject weather = object[QStringLiteral("real")][QStringLiteral("weather")].toObject();
                     lastObservation.setCurrentConditions(weather[QStringLiteral("info")].toString());
-                    const QJsonObject sunriseSunset = real[QStringLiteral("sunriseSunset")].toObject();
-                    const QDateTime sunrise = QDateTime::fromString(sunriseSunset[QStringLiteral("sunrise")].toString(), fullTimeFormat),
-                                    sunset = QDateTime::fromString(sunriseSunset[QStringLiteral("sunset")].toString(), fullTimeFormat),
+                    const QDateTime sunrise = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(), fullTimeFormat),
+                                    sunset = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(), fullTimeFormat),
                                     now = QDateTime::currentDateTime();
-                    qDebug(WEATHER::ION::NMCCN) << "sunrise" << sunriseSunset[QStringLiteral("sunrise")].toString() << "sunset"
-                                                << sunriseSunset[QStringLiteral("sunset")].toString();
-                    qDebug(WEATHER::ION::NMCCN) << "surise" << sunrise << "sunset" << sunset << "now" << now;
-                    const QJsonObject wind = real[QStringLiteral("wind")].toObject();
-                    const qreal windSpeed = wind[QStringLiteral("speed")].toDouble();
+                    const qreal windSpeed = object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble();
                     const bool currentIsNight = sunset <= now || now < sunrise,
                                currentIsWindy = windSpeed > 1.6; // wind faster than 1.6m/s means windy(to human)
                     const ConditionIcons conditionIcon =
@@ -177,7 +167,7 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     lastObservation.setWindchill(weather[QStringLiteral("feelst")].toDouble());
                     lastObservation.setHumidex(weather[QStringLiteral("feelst")].toDouble());
                     lastObservation.setWindSpeed(windSpeed);
-                    const QString windDirection = this->getWindDirection(this->getWindDirection(wind[QStringLiteral("degree")].toDouble()));
+                    const QString windDirection = this->getWindDirection(this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble()));
                     lastObservation.setWindDirection(windDirection);
                     lastObservation.setHumidity(weather[QStringLiteral("humidity")].toDouble());
                     forecast->setLastObservation(lastObservation);
@@ -220,9 +210,9 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     forecast->setFutureDays(futureDays);
 
                     std::shared_ptr<Warnings> warnings = std::make_shared<Warnings>();
-                    const QString warnAlert = real[QStringLiteral("warn")][QStringLiteral("alert")].toString(),
-                                  warnSignallevel = real[QStringLiteral("warn")][QStringLiteral("signallevel")].toString(),
-                                  warnUrlPath = real[QStringLiteral("warn")][QStringLiteral("url")].toString();
+                    const QString warnAlert = object[QStringLiteral("real")][QStringLiteral("warn")][QStringLiteral("alert")].toString(),
+                                  warnSignallevel = object[QStringLiteral("real")][QStringLiteral("warn")][QStringLiteral("signallevel")].toString(),
+                                  warnUrlPath = object[QStringLiteral("real")][QStringLiteral("warn")][QStringLiteral("url")].toString();
                     if (warnAlert != invalidValue && warnSignallevel != invalidValue && warnUrlPath != invalidValue) {
                         const QString warnUrl = apiBase + warnUrlPath;
                         Warning warning(this->getWarnPriority(warnSignallevel), warnAlert);
@@ -230,7 +220,7 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                         warnings->addWarning(warning);
                     } else {
                         qInfo(WEATHER::ION::NMCCN) << "No valid warning object found.";
-                        qDebug(WEATHER::ION::NMCCN) << "Ignoring invalid warning object" << real[QStringLiteral("warn")].toObject();
+                        qDebug(WEATHER::ION::NMCCN) << "Ignoring invalid warning object" << object[QStringLiteral("real")][QStringLiteral("warn")].toObject();
                     }
 
                     promise->addResult(forecast);
