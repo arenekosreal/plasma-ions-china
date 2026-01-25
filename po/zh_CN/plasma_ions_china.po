@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-24 12:28+0800\n"
+"POT-Creation-Date: 2026-01-25 12:36+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,10 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/nmccn/nmccn.cpp:104 src/plasma_engine_nmccn/nmccn.cpp:88
+#: src/nmccn/nmccn.cpp:118 src/plasma_engine_nmccn/nmccn.cpp:109
 msgid "Source: National Meteorological Center of China"
 msgstr "数据来源：中国国家气象中心"
 
-#: src/nmccn/nmccn.cpp:116 src/plasma_engine_nmccn/nmccn.cpp:90
+#: src/nmccn/nmccn.cpp:130 src/plasma_engine_nmccn/nmccn.cpp:111
 msgid "China"
 msgstr "中国"
