@@ -39,12 +39,12 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    - `PLASMA_IONS_CHINA_ENABLE_LEGACY`: If enable legacy ions used for KDE < 6.5, defaults to `OFF`.
    - `PLASMA_IONS_CHINA_USE_SYSTEM_HEADERS`: If use system headers for libplasmaweatherion and libplasmaweatherdata, defaults to `OFF`.
 
+      Most of the time the default value works well. If you want to set to `ON`,
+      please ensure you have those headers installed in `<prefix>/include/plasma/weather`.
+      See [here](https://invent.kde.org/plasma/kdeplasma-addons/-/merge_requests/933) for more info.
+
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.
-
-   Setting `PlasmaWeather_ROOT` is required due to that kdeplasma-addons does not provide headers for `libplasmaweatherion.so` and `libplasmaweatherdata.so`.
-   If you find your Linux Distribution provides those headers with filesystem hierarchy like [include](./include),
-   it is recommended to omit/update this value to use headers in your system.
 
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
 
