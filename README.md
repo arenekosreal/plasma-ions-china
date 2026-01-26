@@ -29,8 +29,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
    ```bash
    cmake -B build -S "/path/to/plasma-ions-china \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DPlasmaWeather_ROOT=/path/to/plasma-ions-china"
+      -DCMAKE_BUILD_TYPE=Release
    cmake --build  build
    cmake --install build
    ```
@@ -38,6 +37,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    Available cmake options to control configuring:
    - `PLASMA_IONS_CHINA_ENABLE_MODERN`: If enable modern ions used for KDE >= 6.5, defaults to `ON`.
    - `PLASMA_IONS_CHINA_ENABLE_LEGACY`: If enable legacy ions used for KDE < 6.5, defaults to `OFF`.
+   - `PLASMA_IONS_CHINA_USE_SYSTEM_HEADERS`: If use system headers for libplasmaweatherion and libplasmaweatherdata, defaults to `OFF`.
 
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.

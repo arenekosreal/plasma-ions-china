@@ -1,5 +1,5 @@
-set(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION 6.4.5) # 6.4.5 is the last KDE6 version using DataEngine.
 set(_PLASMA_WEATHER_QT_MIN_VERSION 6.5.0) # 6.5.0 is the first used Qt6 version of KDE6.
+mark_as_advanced(_PLASMA_WEATHER_QT_MIN_VERSION)
 
 if(NOT QT_MAJOR_VERSION)
     string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" QT_MAJOR_VERSION "${_PLASMA_WEATHER_QT_MIN_VERSION}")
@@ -8,101 +8,131 @@ if(QT_MAJOR_VERSION LESS 6)
     message(FATAL_ERROR "Qt < 6 is not supported.")
 endif()
 
-include(FindPackageHandleStandardArgs)
-
-find_package_check_version("${_PLASMA_WEATHER_DATAENGINE_LAST_VERSION}" _PLASMA_WEATHER_LEGACY_ALLOWED
-                           HANDLE_VERSION_RANGE)
-
 if(Ion IN_LIST PlasmaWeather_FIND_COMPONENTS AND NOT Data IN_LIST PlasmaWeather_FIND_COMPONENTS)
     list(APPEND PlasmaWeather_FIND_COMPONENTS Data)
+    set(PlasmaWeather_FIND_REQUIRED_Data TRUE)
 endif()
 
-# plasma_weather_target(COMPONENT <component-name> HEADER <header> LIBRARY <library> [REQUIRED])
-# Create a target based on component name.
-function(plasma_weather_target)
-    set(_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_OPTIONS "REQUIRED")
-    set(_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_ONE_VALUES "COMPONENT" "HEADER" "LIBRARY")
-    set(_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_MULTIPLE_VALUES "")
-    cmake_parse_arguments(PARSE_ARGV 0 _PLASMA_WEATHER_TARGET
-                          "${_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_OPTIONS}"            # Options
-                          "${_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_ONE_VALUES}"         # Arguments with single value
-                          "${_PLASMA_WEATHER_TARGET_ARGUMENT_NAMES_MULTIPLE_VALUES}")   # Arguments with multiple values
-    set(${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_FOUND FALSE PARENT_SCOPE)
-    find_path(_PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_ROOT
-              NAMES "${_PLASMA_WEATHER_TARGET_HEADER}"
-              DOC "Include root path of ${_PLASMA_WEATHER_TARGET_COMPONENT}")
-    find_library(_PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY
-                 NAMES "${_PLASMA_WEATHER_TARGET_LIBRARY}"
-                 DOC "Library file path of ${_PLASMA_WEATHER_TARGET_COMPONENT}")
-    mark_as_advanced(_PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_ROOT _PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY)
-    if(_PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_ROOT AND _PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY)
-        cmake_path(REMOVE_FILENAME _PLASMA_WEATHER_TARGET_HEADER OUTPUT_VARIABLE _PLASMA_WEATHER_TARGET_INCLUDE_RELATIVE_DIR)
-        cmake_path(ABSOLUTE_PATH _PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_ROOT OUTPUT_VARIABLE _PLASMA_WEATHER_TARGET_INCLUDE_ROOT)
-        cmake_path(ABSOLUTE_PATH _PLASMA_WEATHER_TARGET_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY OUTPUT_VARIABLE _PLASMA_WEATHER_TARGET_LIBRARY)
-        file(REAL_PATH "${_PLASMA_WEATHER_TARGET_LIBRARY}" _PLASMA_WEATHER_TARGET_LIBRARY_REAL)
-        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+$" _PLASMA_WEATHER_TARGET_LIBRARY_VERSION "${_PLASMA_WEATHER_TARGET_LIBRARY_REAL}")
-        set(_PLASMA_WEATHER_TARGET_NAME Plasma::Weather::${_PLASMA_WEATHER_TARGET_COMPONENT})
-        add_library(${_PLASMA_WEATHER_TARGET_NAME} SHARED IMPORTED GLOBAL)
-        set(_PLASMA_WEATHER_TARGET_INCLUDE_DIR "${_PLASMA_WEATHER_TARGET_INCLUDE_ROOT}/${_PLASMA_WEATHER_TARGET_INCLUDE_RELATIVE_DIR}")
-        set_target_properties(${_PLASMA_WEATHER_TARGET_NAME}
-                              PROPERTIES IMPORTED_LOCATION "${_PLASMA_WEATHER_TARGET_LIBRARY}"
-                                         INTERFACE_INCLUDE_DIRECTORIES "${_PLASMA_WEATHER_TARGET_INCLUDE_DIR}")
-        find_package_check_version("${_PLASMA_WEATHER_TARGET_LIBRARY_VERSION}" _PLASMA_WEATHER_TARGET_LIBRARY_VERSION_CHECK_RESULT
-                                   HANDLE_VERSION_RANGE
-                                   RESULT_MESSAGE_VARIABLE _PLASMA_WEATHER_TARGET_LIBRARY_VERSION_CHECK_RESULT_MESSAGE)
-        if(_PLASMA_WEATHER_TARGET_LIBRARY_VERSION_CHECK_RESULT)
-            if(NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-                set(_PLASMA_WEATHER_TARGET_FOUND_MSG_HEAD "Found ${CMAKE_FIND_PACKAGE_NAME} ${_PLASMA_WEATHER_TARGET_COMPONENT}: ${_PLASMA_WEATHER_TARGET_LIBRARY}")
-                message(STATUS "${_PLASMA_WEATHER_TARGET_FOUND_MSG_HEAD} ${_PLASMA_WEATHER_TARGET_LIBRARY_VERSION_CHECK_RESULT_MESSAGE}")
-            endif()
-            set(${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY "${_PLASMA_WEATHER_TARGET_LIBRARY}" PARENT_SCOPE)
-            set(${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_DIR "${_PLASMA_WEATHER_TARGET_INCLUDE_DIR}" PARENT_SCOPE)
-            set(${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_VERSION "${_PLASMA_WEATHER_TARGET_LIBRARY_VERSION}" PARENT_SCOPE)
-            set(${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIRS ${${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIRS}
-                                                        ${${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_INCLUDE_DIR} PARENT_SCOPE)
-            set(${CMAKE_FIND_PACKAGE_NAME}_LIBRARIES ${${CMAKE_FIND_PACKAGE_NAME}_LIBRARIES}
-                                                     ${${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_LIBRARY} PARENT_SCOPE)
-            set(${CMAKE_FIND_PACKAGE_NAME}_${_PLASMA_WEATHER_TARGET_COMPONENT}_FOUND TRUE PARENT_SCOPE)
-        else()
-            message($<IF:$<_PLASMA_WEATHER_TARGET_REQUIRED>,FATAL_ERROR,WARNING>
-                    "${CMAKE_FIND_PACKAGE_NAME} ${_PLASMA_WEATHER_TARGET_COMPONENT} was not found: ${_PLASMA_WEATHER_TARGET_LIBRARY_VERSION_CHECK_RESULT_MESSAGE}")
-        endif()
-    endif()
-endfunction()
+include(FindPackageHandleStandardArgs)
 
 if(Data IN_LIST PlasmaWeather_FIND_COMPONENTS)
-    plasma_weather_target(COMPONENT Data HEADER "plasma/weather/plasmaweatherdata_export.h" LIBRARY "plasmaweatherdata" $<PlasmaWeather_FIND_REQUIRED_Data:REQUIRED>)
-    if(TARGET Plasma::Weather::Data)
-        find_package(Qt${QT_MAJOR_VERSION} ${_PLASMA_WEATHER_QT_MIN_VERSION} COMPONENTS Qml REQUIRED)
-        target_link_libraries(Plasma::Weather::Data INTERFACE Qt::Qml)
-    endif()
-endif()
-
-if(Ion IN_LIST PlasmaWeather_FIND_COMPONENTS)
-    plasma_weather_target(COMPONENT Ion HEADER "plasma/weather/ion.h" LIBRARY "plasmaweatherion" $<PlasmaWeather_FIND_REQUIRED_Ion:REQUIRED>)
-    if(TARGET Plasma::Weather::Ion)
-        set(PlasmaWeather_VERSION "${PlasmaWeather_Ion_VERSION}")
-        target_link_libraries(Plasma::Weather::Ion INTERFACE Plasma::Weather::Data)
-    endif()
-endif()
-
-if(IonLegacy IN_LIST PlasmaWeather_FIND_COMPONENTS)
-    if(_PLASMA_WEATHER_LEGACY_ALLOWED)
-        plasma_weather_target(COMPONENT IonLegacy HEADER "plasma5support/weather/ion.h" LIBRARY "weather_ion" $<PlasmaWeather_FIND_REQUIRED_IonLegacy:REQUIRED>)
-        if(TARGET Plasma::Weather::IonLegacy)
-            find_package(Plasma5Support REQUIRED)
-            target_link_libraries(Plasma::Weather::IonLegacy INTERFACE Plasma::Plasma5Support)
-            if(NOT PlasmaWeather_VERSION)
-                # PlasmaWeather_IonLegacy_VERSION is not equals to actual version.
-                set(PlasmaWeather_VERSION ${Plasma5Support_VERSION})
-            endif()
+    find_path(PlasmaWeather_Data_INCLUDE_DIR
+              "plasma/weather/plasmaweatherdata_export.h"
+              DOC "Include directory path for Plasma::Weather::Data")
+    find_library(PlasmaWeather_Data_LIBRARY
+                 "plasmaweatherdata"
+                 DOC "Library file path for Plasma::Weather::Data")
+    if(PlasmaWeather_Data_INCLUDE_DIR AND PlasmaWeather_Data_LIBRARY)
+        set(PlasmaWeather_Data_INCLUDE_DIR "${PlasmaWeather_Data_INCLUDE_DIR}/plasma/weather")
+        file(REAL_PATH "${PlasmaWeather_Data_LIBRARY}" _PLASMA_WEATHER_Data_LIBRARY)
+        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+$" PlasmaWeather_Data_VERSION "${_PLASMA_WEATHER_Data_LIBRARY}")
+        find_package_check_version("${PlasmaWeather_Data_VERSION}" _PLASMA_WEATHER_Data_VERSION_CHECK_RESULT
+                                   HANDLE_VERSION_RANGE
+                                   RESULT_MESSAGE_VARIABLE _PLASMA_WEATHER_Data_VERSION_CHECK_RESULT_MESSAGE)
+        if(_PLASMA_WEATHER_Data_VERSION_CHECK_RESULT)
+            add_library(Plasma::Weather::Data SHARED IMPORTED GLOBAL)
+            set_target_properties(Plasma::Weather::Data
+                                  PROPERTIES IMPORTED_LOCATION "${PlasmaWeather_Data_LIBRARY}"
+                                             INTERFACE_INCLUDE_DIRECTORIES "${PlasmaWeather_Data_INCLUDE_DIR}")
         endif()
     endif()
 endif()
+if(TARGET Plasma::Weather::Data)
+    find_package(Qt${QT_MAJOR_VERSION} REQUIRED COMPONENTS Qml)
+    target_link_libraries(Plasma::Weather::Data INTERFACE Qt::Qml)
+    set(PlasmaWeather_Data_FOUND TRUE)
+    if(NOT PlasmaWeather_FIND_QUIETLY)
+        message(STATUS "Found PlasmaWeather Data: ${PlasmaWeather_Data_LIBRARY} ${_PLASMA_WEATHER_Data_VERSION_CHECK_RESULT_MESSAGE}")
+    endif()
+elseif(PlasmaWeather_FIND_REQUIRED_Data)
+    message(FATAL_ERROR "PlasmaWeather Data was not found: ${_PLASMA_WEATHER_Data_VERSION_CHECK_RESULT_MESSAGE}")
+elseif(Data IN_LIST PlasmaWeather_FIND_COMPONENTS)
+    message(WARNING "PlasmaWeather Data was not found: ${_PLASMA_WEATHER_Data_VERSION_CHECK_RESULT_MESSAGE}")
+endif()
+mark_as_advanced(_PLASMA_WEATHER_Data_LIBRARY
+                 _PLASMA_WEATHER_Data_VERSION_CHECK_RESULT
+                 _PLASMA_WEATHER_Data_VERSION_CHECK_RESULT_MESSAGE)
+
+if(Ion IN_LIST PlasmaWeather_FIND_COMPONENTS)
+    find_path(PlasmaWeather_Ion_INCLUDE_DIR
+              "plasma/weather/ion.h"
+              DOC "Include directory path for Plasma::Weather::Ion")
+    find_library(PlasmaWeather_Ion_LIBRARY
+                "plasmaweatherion"
+                DOC "Library file path for Plasma::Weather::Ion")
+    if(PlasmaWeather_Ion_INCLUDE_DIR AND PlasmaWeather_Ion_LIBRARY)
+        set(PlasmaWeather_Ion_INCLUDE_DIR "${PlasmaWeather_Ion_INCLUDE_DIR}/plasma/weather")
+        file(REAL_PATH "${PlasmaWeather_Ion_LIBRARY}" _PLASMA_WEATHER_Ion_LIBRARY)
+        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+$" PlasmaWeather_Ion_VERSION "${_PLASMA_WEATHER_Ion_LIBRARY}")
+        find_package_check_version("${PlasmaWeather_Ion_VERSION}" _PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT
+                                   HANDLE_VERSION_RANGE
+                                   RESULT_MESSAGE_VARIABLE _PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT_MESSAGE)
+        if(_PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT)
+            add_library(Plasma::Weather::Ion SHARED IMPORTED GLOBAL)
+            set_target_properties(Plasma::Weather::Ion
+                                  PROPERTIES IMPORTED_LOCATION "${PlasmaWeather_Ion_LIBRARY}"
+                                             INTERFACE_INCLUDE_DIRECTORIES "${PlasmaWeather_Ion_INCLUDE_DIR}")
+        endif()
+    endif()
+endif()
+if(TARGET Plasma::Weather::Ion)
+    set(PlasmaWeather_VERSION "${PlasmaWeather_Ion_VERSION}")
+    target_link_libraries(Plasma::Weather::Ion INTERFACE Plasma::Weather::Data)            
+    set(PlasmaWeather_Ion_FOUND TRUE)
+    if(NOT PlasmaWeather_FIND_QUIETLY)
+        message(STATUS "Found PlasmaWeather Ion: ${PlasmaWeather_Ion_LIBRARY} ${_PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT_MESSAGE}")
+    endif()
+elseif(PlasmaWeather_FIND_REQUIRED_Ion)
+    message(FATAL_ERROR "PlasmaWeather Ion was not found: ${_PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT_MESSAGE}")
+elseif(Ion IN_LIST PlasmaWeather_FIND_COMPONENTS)
+    message(WARNING "PlasmaWeather Ion was not found: ${_PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT_MESSAGE}")
+endif()
+mark_as_advanced(_PLASMA_WEATHER_Ion_LIBRARY
+                 _PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT
+                 _PLASMA_WEATHER_Ion_VERSION_CHECK_RESULT_MESSAGE)
+
+if(IonLegacy IN_LIST PlasmaWeather_FIND_COMPONENTS)
+    find_path(PlasmaWeather_IonLegacy_INCLUDE_DIR
+              "plasma5support/weather/ion.h"
+              DOC "Include directory path for Plasma::Weather::IonLegacy")
+    find_library(PlasmaWeather_IonLegacy_LIBRARY
+                 "weather_ion"
+                 DOC "Library file path for Plasma::Weather::IonLegacy")
+    if(PlasmaWeather_IonLegacy_INCLUDE_DIR AND PlasmaWeather_IonLegacy_LIBRARY)
+        set(PlasmaWeather_IonLegacy_INCLUDE_DIR "${PlasmaWeather_IonLegacy_INCLUDE_DIR}/plasma5support/weather")
+        file(REAL_PATH "${PlasmaWeather_IonLegacy_LIBRARY}" _PLASMA_WEATHER_IonLegacy_LIBRARY)
+        string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+$" PlasmaWeather_IonLegacy_VERSION "${_PLASMA_WEATHER_IonLegacy_LIBRARY}")
+        find_package(Plasma5Support REQUIRED) # IonLegacy's soname is not equals to its version
+        find_package_check_version("${Plasma5Support_VERSION}" _PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT
+                                   HANDLE_VERSION_RANGE
+                                   RESULT_MESSAGE_VARIABLE _PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT_MESSAGE)
+        if(_PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT)
+            add_library(Plasma::Weather::IonLegacy SHARED IMPORTED GLOBAL)
+            set_target_properties(Plasma::Weather::IonLegacy
+                                  PROPERTIES IMPORTED_LOCATION "${PlasmaWeather_IonLegacy_LIBRARY}"
+                                             INTERFACE_INCLUDE_DIRECTORIES "${PlasmaWeather_IonLegacy_INCLUDE_DIR}")
+        endif()
+    endif()
+endif()
+if(TARGET Plasma::Weather::IonLegacy)
+    if(NOT PlasmaWeather_VERSION)
+        set(PlasmaWeather_VERSION "${Plasma5Support_VERSION}")
+    endif()
+    target_link_libraries(Plasma::Weather::IonLegacy INTERFACE Plasma::Plasma5Support)
+    set(PlasmaWeather_IonLegacy_FOUND TRUE)
+    if(NOT PlasmaWeather_FIND_QUIETLY)
+        message(STATUS "Found PlasmaWeather Legacy Ion: ${PlasmaWeather_IonLegacy_LIBRARY} ${_PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT_MESSAGE}")
+    endif()
+elseif(PlasmaWeather_FIND_REQUIRED_IonLegacy)
+    message(FATAL_ERROR "PlasmaWeather IonLegacy was not found: ${_PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT_MESSAGE}")
+elseif(IonLegacy IN_LIST PlasmaWeather_FIND_COMPONENTS)
+    message(WARNING "PlasmaWeather IonLegacy was not found: ${_PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT_MESSAGE}")
+endif()
+mark_as_advanced(_PLASMA_WEATHER_IonLegacy_LIBRARY
+                 _PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT
+                 _PLASMA_WEATHER_IonLegacy_VERSION_CHECK_RESULT_MESSAGE)
 
 find_package_handle_standard_args(PlasmaWeather
                                   VERSION_VAR PlasmaWeather_VERSION
                                   HANDLE_VERSION_RANGE
                                   HANDLE_COMPONENTS)
-
-mark_as_advanced(_PLASMA_WEATHER_DATAENGINE_LAST_VERSION _PLASMA_WEATHER_LEGACY_ALLOWED _PLASMA_WEATHER_QT_MIN_VERSION)
