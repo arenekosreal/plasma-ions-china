@@ -60,7 +60,7 @@ set(ION_HEADERS_TARGET ion_headers)
 if(PLASMA_IONS_CHINA_ENABLE_MODERN AND NOT PLASMA_IONS_CHINA_USE_SYSTEM_HEADERS)
     include(PlasmaIonsChinaIonHeadersTarget)
     plasma_ions_china_setup_ion_headers(VERSION 6.5.5
-                                        SHA256SUM 32b69b987258998b95017cf08aba1d85b986303bd59e1bbc600ed12e2184f5cb
+                                        HASH SHA256=32b69b987258998b95017cf08aba1d85b986303bd59e1bbc600ed12e2184f5cb
                                         TARGET_NAME "${ION_HEADERS_TARGET}"
                                         VARIABLES PlasmaWeather_Data_INCLUDE_DIR
                                                   PlasmaWeather_Ion_INCLUDE_DIR)

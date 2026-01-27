@@ -1,6 +1,6 @@
 function(plasma_ions_china_setup_ion_headers)
     set(options)
-    set(oneValueArgs VERSION SHA256SUM TARGET_NAME)
+    set(oneValueArgs VERSION HASH TARGET_NAME)
     set(multiValueArgs VARIABLES)
     cmake_parse_arguments(PARSE_ARGV 0 PLASMA_IONS_CHINA
                           "${options}"
@@ -12,7 +12,7 @@ function(plasma_ions_china_setup_ion_headers)
     include(ExternalProject)
     ExternalProject_Add("${PLASMA_IONS_CHINA_TARGET_NAME}"
                         URL https://download.kde.org/stable/plasma/${PLASMA_IONS_CHINA_VERSION}/kdeplasma-addons-${PLASMA_IONS_CHINA_VERSION}.tar.xz
-                        URL_HASH "SHA256=${PLASMA_IONS_CHINA_SHA256SUM}"
+                        URL_HASH "${PLASMA_IONS_CHINA_HASH}"
                         BUILD_COMMAND ""
                         INSTALL_COMMAND ""
                         TEST_COMMAND ""
