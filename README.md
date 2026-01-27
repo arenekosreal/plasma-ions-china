@@ -42,6 +42,11 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
       please ensure you have those headers installed in `<prefix>/include/plasma/weather`.
       See [here](https://invent.kde.org/plasma/kdeplasma-addons/-/merge_requests/933) for more info.
 
+   - `EXTERNAL_PROJECT_URL_KDEPLASMA_ADDONS`: Custom url to `kdeplasma-addons`' source tarball.
+
+      Useful for offline building. Provide `file://` url to point to local file.
+      You need to ensure your tarball is valid and passes checksum.
+
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.
 

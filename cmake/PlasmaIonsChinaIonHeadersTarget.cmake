@@ -8,10 +8,15 @@ function(plasma_ions_china_setup_ion_headers)
                           "${multiValueArgs}")
     # IMPORTED target needs its include directory exists when configuring
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/plasma/weather")
+    if(EXTERNAL_PROJECT_URL_KDEPLASMA_ADDONS)
+        message(STATUS "Using kdeplasma-addons v${PLASMA_IONS_CHINA_VERSION} source tarball from ${EXTERNAL_PROJECT_URL_KDEPLASMA_ADDONS}")
+    else()
+        set(EXTERNAL_PROJECT_URL_KDEPLASMA_ADDONS "https://download.kde.org/stable/plasma/${PLASMA_IONS_CHINA_VERSION}/kdeplasma-addons-${PLASMA_IONS_CHINA_VERSION}.tar.xz")
+    endif()
     
     include(ExternalProject)
     ExternalProject_Add("${PLASMA_IONS_CHINA_TARGET_NAME}"
-                        URL https://download.kde.org/stable/plasma/${PLASMA_IONS_CHINA_VERSION}/kdeplasma-addons-${PLASMA_IONS_CHINA_VERSION}.tar.xz
+                        URL "${EXTERNAL_PROJECT_URL_KDEPLASMA_ADDONS}"
                         URL_HASH "${PLASMA_IONS_CHINA_HASH}"
                         BUILD_COMMAND ""
                         INSTALL_COMMAND ""
