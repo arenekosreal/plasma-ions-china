@@ -28,8 +28,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 3. Build and install the project:
 
    ```bash
-   cmake -B build -S "/path/to/plasma-ions-china \
-      -DCMAKE_BUILD_TYPE=Release
+   cmake -B build -S "/path/to/plasma-ions-china" -DCMAKE_BUILD_TYPE=Release
    cmake --build  build
    cmake --install build
    ```
