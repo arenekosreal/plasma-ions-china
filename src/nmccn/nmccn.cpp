@@ -315,7 +315,8 @@ Ion::ConditionIcons NmcCn::getWeatherConditionIcon(const QString &img, const boo
 
 Ion::WindDirections NmcCn::getWindDirection(const float degree) const
 {
-    return degree >= 0 ? (Ion::WindDirections)(qRound(degree + 11.25) % 16) : VR;
+    const float unit = 22.5;
+    return degree >= 0 ? (Ion::WindDirections)(qRound((degree + unit / 2) / unit) % 16) : VR;
 }
 
 QString NmcCn::getWindDirection(const Ion::WindDirections windDirection) const
