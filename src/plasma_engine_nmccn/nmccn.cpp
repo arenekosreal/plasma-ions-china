@@ -291,7 +291,61 @@ IonInterface::ConditionIcons NmcCn::getWeatherConditionIcon(const QString &img, 
 IonInterface::WindDirections NmcCn::getWindDirection(const float degree) const
 {
     const float unit = 22.5;
-    return degree >= 0 && degree != invalidValue.toDouble() ? (IonInterface::WindDirections)(qRound((degree + unit / 2) / unit) % 16) : VR;
+    if(degree >= unit * 0 && degree < unit * 0 + unit / 2) {
+        return N;
+    }
+    else if(degree < unit * 1 + unit / 2) {
+        return NNE;
+    }
+    else if(degree < unit * 2 + unit / 2) {
+        return NE;
+    }
+    else if(degree < unit * 3 + unit / 2) {
+        return ENE;
+    }
+    else if(degree < unit * 4 + unit / 2) {
+        return E;
+    }
+    else if(degree < unit * 5 + unit / 2) {
+        return ESE;
+    }
+    else if(degree < unit * 6 + unit / 2) {
+        return SE;
+    }
+    else if(degree < unit * 7 + unit / 2) {
+        return SSE;
+    }
+    else if(degree < unit * 8 + unit / 2) {
+        return S;
+    }
+    else if(degree < unit * 9 + unit / 2) {
+        return SSW;
+    }
+    else if(degree < unit * 10 + unit / 2) {
+        return SW;
+    }
+    else if(degree < unit * 11 + unit / 2) {
+        return WSW;
+    }
+    else if(degree < unit * 12 + unit / 2) {
+        return W;
+    }
+    else if(degree < unit * 13 + unit / 2) {
+        return WNW;
+    }
+    else if(degree < unit * 14 + unit / 2) {
+        return NW;
+    }
+    else if(degree < unit * 15 + unit / 2) {
+        return NNW;
+    }
+    else if(degree < unit * 16){
+        return N;
+    }
+    else {
+        qWarning(IONENGINE_NMCCN) << "Invalid degree" << degree;
+        return VR;
+    }
 }
 
 QString NmcCn::getWindDirection(const IonInterface::WindDirections windDirection) const
