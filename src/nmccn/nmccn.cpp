@@ -377,7 +377,7 @@ void NmcCn::fetchForecast(const QString &stationId, const QString &referer)
     query.addQueryItem(QStringLiteral("_"), QStringLiteral("%1").arg(QDateTime::currentMSecsSinceEpoch()));
     url.setQuery(query);
     request.setUrl(url);
-    qDebug(WEATHER::ION::NMCCN) << "Generated search api url:" << url.toEncoded();
+    qDebug(WEATHER::ION::NMCCN) << "Generated request api url:" << url.toEncoded();
     QHttpHeaders headers;
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Referer, referer);
     headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::UserAgent, userAgent);
