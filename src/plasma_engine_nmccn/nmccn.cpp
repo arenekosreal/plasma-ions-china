@@ -110,9 +110,9 @@ bool NmcCn::updateIonSource(const QString &source)
                         data.insert(QStringLiteral("Credit Url"), referer);
                         data.insert(QStringLiteral("Country"), i18n("China"));
 
-                        data.insert(QStringLiteral("Place"), object[QStringLiteral("station")][QStringLiteral("city")].toString());
-                        data.insert(QStringLiteral("Region"), object[QStringLiteral("station")][QStringLiteral("province")].toString());
-                        data.insert(QStringLiteral("Station"), object[QStringLiteral("station")][QStringLiteral("city")].toString());
+                        data.insert(QStringLiteral("Place"), object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("city")].toString());
+                        data.insert(QStringLiteral("Region"), object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("province")].toString());
+                        data.insert(QStringLiteral("Station"), object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("city")].toString());
                         data.insert(QStringLiteral("Observation Period"), object[QStringLiteral("real")][QStringLiteral("publish_time")].toString());
                         const QDateTime sunrise = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(), fullTimeFormat),
                                         sunset = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(), fullTimeFormat),

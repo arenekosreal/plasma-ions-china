@@ -124,9 +124,9 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     forecast->setMetadata(metaData);
 
                     Station station;
-                    station.setStation(object[QStringLiteral("station")][QStringLiteral("city")].toString());
-                    station.setPlace(object[QStringLiteral("station")][QStringLiteral("city")].toString());
-                    station.setRegion(object[QStringLiteral("station")][QStringLiteral("province")].toString());
+                    station.setStation(object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("city")].toString());
+                    station.setPlace(object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("city")].toString());
+                    station.setRegion(object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("province")].toString());
                     station.setCountry(i18n("China"));
                     bool lonOk, latOk;
                     const qreal lon = placeInfoParts[4].toDouble(&lonOk), lat = placeInfoParts[5].toDouble(&latOk);
