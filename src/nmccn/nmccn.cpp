@@ -316,7 +316,11 @@ Ion::ConditionIcons NmcCn::getWeatherConditionIcon(const QString &img, const boo
 Ion::WindDirections NmcCn::getWindDirection(const float degree) const
 {
     const float unit = 360.0 / 16;
-    if(degree >= unit * 0 && degree < unit * 0 + unit / 2) {
+    if (degree < unit * 0) {
+        qWarning(WEATHER::ION::NMCCN) << "Invalid degree" << degree;
+        return VR;
+    }
+    else if(degree < unit * 0 + unit / 2) {
         return N;
     }
     else if(degree < unit * 1 + unit / 2) {
@@ -367,9 +371,13 @@ Ion::WindDirections NmcCn::getWindDirection(const float degree) const
     else if(degree < unit * 16){
         return N;
     }
-    else {
+    else if(degree == invalidValue.toDouble()){
         qWarning(WEATHER::ION::NMCCN) << "Invalid degree" << degree;
         return VR;
+    }
+    else {
+        qInfo(WEATHER::ION::NMCCN) << "Found degree greater than 360:" << degree;
+        return getWindDirection(std::fmod(degree, 360));
     }
 }
 
