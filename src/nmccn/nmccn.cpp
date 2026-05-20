@@ -205,6 +205,8 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                             qWarning(WEATHER::ION::NMCCN)
                                 << "Skipping invalid night detail" << detail[QStringLiteral("night")].toObject() << "for date" << date;
                         }
+                        futureDayForecast.setMonthDay(date.day());
+                        futureDayForecast.setWeekDay(QLocale().dayName(date.dayOfWeek()));
                         futureDays->addDay(futureDayForecast);
                     }
                     forecast->setFutureDays(futureDays);
