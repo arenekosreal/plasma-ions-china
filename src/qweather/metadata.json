@@ -1,0 +1,11 @@
+{
+  "KPlugin": {
+    "Description": "JSON data from QWeather",
+    "Description[zh_CN]": "和风天气提供的 JSON 数据",
+    "Icon": "noneyet",
+    "Name": "QWeather",
+    "Name[zh_CN]": "和风天气"
+  },
+  "Comment": "Require registeration. Need payment for large usage.",
+  "Quality": -1
+}

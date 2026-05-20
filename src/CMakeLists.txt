@@ -1,5 +1,5 @@
 # Add more ion here
-set(ION_NAMES nmccn)
+set(ION_NAMES nmccn qweather)
 foreach(ION_NAME IN LISTS ION_NAMES)
   if(TARGET Plasma::Weather::IonLegacy AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plasma_engine_${ION_NAME}/CMakeLists.txt")
     message(DEBUG "Adding legacy Ion ${ION_NAME}...")

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plasma-ions-china 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-25 12:36+0800\n"
+"POT-Creation-Date: 2026-05-20 14:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,4 +23,49 @@ msgstr ""
 
 #: src/nmccn/nmccn.cpp:130 src/plasma_engine_nmccn/nmccn.cpp:111
 msgid "China"
+msgstr ""
+
+#: src/qweather/qweather.cpp:175
+#, qt-format
+msgid "Source: %1"
+msgstr ""
+
+#: src/qweather/qweather.cpp:617
+msgid "Little to no discomfort"
+msgstr ""
+
+#: src/qweather/qweather.cpp:619
+msgid "Some discomfort"
+msgstr ""
+
+#: src/qweather/qweather.cpp:621
+msgid "Great discomfort; avoid exertion"
+msgstr ""
+
+#: src/qweather/qweather.cpp:623
+msgid "Dangerous; heat stroke quite possible"
+msgstr ""
+
+#: src/qweather/qweather.cpp:663
+msgid "Extremely Poor"
+msgstr ""
+
+#: src/qweather/qweather.cpp:665
+msgid "Poor"
+msgstr ""
+
+#: src/qweather/qweather.cpp:667
+msgid "Relatively Poor"
+msgstr ""
+
+#: src/qweather/qweather.cpp:669
+msgid "General"
+msgstr ""
+
+#: src/qweather/qweather.cpp:671
+msgid "Good"
+msgstr ""
+
+#: src/qweather/qweather.cpp:673
+msgid "Excellent"
 msgstr ""
