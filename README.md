@@ -47,8 +47,37 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
       Useful for offline building. Provide `file://` url to point to local file.
       You need to ensure your tarball is valid and passes checksum.
 
+   - `PLASMA_IONS_CHINA_QWEATHER_PRIVATE_KEY`: The path to the private key of your QWeather project token.
+   
+      Technical detail: It should be PEM format and looks like this:
+      ```
+      -----BEGIN PRIVATE KEY-----
+      ....<base64>....
+      -----END PRIVATE KEY-----
+      ```
+      The last 32 byes of the decoded private key must be the seed.
+      You can use `openssl genpkey -algorithm ED25519 -out ed25519-private.pem` to generate the private key.
+      Use `openssl pkey -pubout -in ed25519-private.pem > ed25519-public.pem` to get the public key to be registered to QWeather.
+      
+      If this option is missing, the qweather ion will be skipped.
+      
+   - `PLASMA_IONS_CHINA_QWEATHER_KID`: The key ID given by QWeather after you registered the public key. 
+   
+      If this option is missing, the qweather ion will be skipped.
+   
+   - `PLASMA_IONS_CHINA_QWEATHER_SUB`: The project ID given by QWeather after you created the project.
+   
+      If this option is missing, the qweather ion will be skipped.
+      
+   - `PLASMA_IONS_CHINA_QWEATHER_API_HOST`: The api host given by QWeather after you registered an account.
+   
+      If this option is missing, the qweather ion will be skipped.
+
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.
+
+   For people who enables qweather ion, we only need to access GeoAPI, Weather, Warning and Weather Indices apis. 
+   You may limit the key's permission for security reasons. Please also note [QWeather's pricing tiers](https://dev.qweather.com/docs/finance/pricing/) so you will not have unexpected payments.
 
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
 
@@ -60,6 +89,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 - qt6-base
 - plasma-workspace < 6.5 OR kdeplasma-addons >= 6.5
+- libsodium (If you enabled the qweather ion)
 
 #### Buildtime extra dependencies
 
@@ -72,6 +102,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 |Name|Description|Comment|Reverse Engineered|Modern|Legacy|
 |----|-----------|-------|------------------|------|------|
 |nmccn|The ion uses api from www.nmc.cn to obtain weather report|The passed daytime report is not available when is night.|Y|[Y](./src/nmccn)|[Y](./src/plasma_engine_nmccn)|
+|qweather|The ion uses api from www.qweather.com to obtain weather report||N|[Y](./src/qweather)|N|
 
 ## Adding new ion
 
