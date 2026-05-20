@@ -75,7 +75,7 @@ void QWeather::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> 
                     region.startsWith(place) ? QStringLiteral("%1-%2").arg(region, station) : QStringLiteral("%1-%2-%3").arg(region, place, station);
                 Station toBeSerialized;
                 toBeSerialized.setRegion(region);
-                toBeSerialized.setPlace(place);
+                toBeSerialized.setPlace(station);
                 toBeSerialized.setStation(station);
                 toBeSerialized.setCountry(country);
                 toBeSerialized.setCoordinates(lat, lon);
