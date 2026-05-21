@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 12:54+0800\n"
+"POT-Creation-Date: 2026-05-21 16:42+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,6 +30,10 @@ msgstr "数据来源：%1"
 #: src/nmccn/nmccn.cpp:130 src/plasma_engine_nmccn/nmccn.cpp:111
 msgid "China"
 msgstr "中国"
+
+#: src/qweather/qweather.cpp:180
+msgid "QWeather"
+msgstr "和风天气"
 
 #: src/qweather/qweather.cpp:634
 msgid "Little to no discomfort"

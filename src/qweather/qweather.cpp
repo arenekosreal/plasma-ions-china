@@ -177,7 +177,7 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
                     credit += QStringLiteral(", ");
             }
         } else {
-            credit = QStringLiteral("QWeather");
+            credit = i18n("QWeather");
         }
         forecast->setMetadata(getMetaData(i18n("Source: %1", credit), nowResponse[QStringLiteral("fxLink")].toString()));
         forecast->setStation(stripNewPlaceInfo(deserialized));
