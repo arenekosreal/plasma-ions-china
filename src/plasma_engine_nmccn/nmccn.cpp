@@ -106,7 +106,7 @@ bool NmcCn::updateIonSource(const QString &source)
                     this,
                     [=](const QJsonObject &object) {
                         Plasma5Support::DataEngine::Data data;
-                        data.insert(QStringLiteral("Credit"), i18n("Source: National Meteorological Center of China"));
+                        data.insert(QStringLiteral("Credit"), i18n("Source: %1", i18n("National Meteorological Center of China")));
                         data.insert(QStringLiteral("Credit Url"), referer);
                         data.insert(QStringLiteral("Country"), i18n("China"));
 
@@ -114,21 +114,34 @@ bool NmcCn::updateIonSource(const QString &source)
                         data.insert(QStringLiteral("Region"), object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("province")].toString());
                         data.insert(QStringLiteral("Station"), object[QStringLiteral("real")][QStringLiteral("station")][QStringLiteral("city")].toString());
                         data.insert(QStringLiteral("Observation Period"), object[QStringLiteral("real")][QStringLiteral("publish_time")].toString());
-                        const QDateTime sunrise = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(), fullTimeFormat),
-                                        sunset = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(), fullTimeFormat),
+                        const QDateTime sunrise = QDateTime::fromString(
+                                            object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(),
+                                            fullTimeFormat),
+                                        sunset = QDateTime::fromString(
+                                            object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(),
+                                            fullTimeFormat),
+
                                         now = QDateTime::currentDateTime();
                         const qreal windSpeed = object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble();
                         const bool currentIsNight = sunset <= now || now < sunrise,
                                    currentIsWindy = windSpeed > 1.6; // wind faster than 1.6m/s means windy(to human)
                         const ConditionIcons conditionIcon =
-                            this->getWeatherConditionIcon(object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("img")].toString(), currentIsWindy, currentIsNight);
+                            this->getWeatherConditionIcon(object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("img")].toString(),
+                                                          currentIsWindy,
+                                                          currentIsNight);
+
                         data.insert(QStringLiteral("Condition Icon"), this->getWeatherIcon(conditionIcon));
-                        data.insert(QStringLiteral("Current Conditions"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("info")].toString());
-                        data.insert(QStringLiteral("Temperature"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("temperature")].toDouble());
-                        data.insert(QStringLiteral("Windchill"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("feelst")].toDouble());
+                        data.insert(QStringLiteral("Current Conditions"),
+                                    object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("info")].toString());
+                        data.insert(QStringLiteral("Temperature"),
+                                    object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("temperature")].toDouble());
+                        data.insert(QStringLiteral("Windchill"),
+                                    object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("feelst")].toDouble());
                         data.insert(QStringLiteral("Humidex"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("feelst")].toDouble());
                         data.insert(QStringLiteral("Wind Direction"),
-                                    this->getWindDirection(this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble())));
+                                    this->getWindDirection(
+                                        this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble())));
+
                         data.insert(QStringLiteral("Wind Speed"), object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble());
                         data.insert(QStringLiteral("Wind Speed Unit"), KUnitConversion::MeterPerSecond);
                         data.insert(QStringLiteral("Humidity"), object[QStringLiteral("real")][QStringLiteral("weather")][QStringLiteral("humidity")].toInt());
@@ -160,8 +173,7 @@ bool NmcCn::updateIonSource(const QString &source)
                             QString title, img, info, maxTemperature, minTemperature;
                             if (currentIsNight) {
                                 qDebug(IONENGINE_NMCCN) << "Using night report.";
-                                title =
-                                    i > 0 ? date.toString(dateFormat) : i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Tonight", "Tonight");
+                                title = i > 0 ? date.toString(dateFormat) : i18ndc(KDE_WEATHER_TRANSLATION_DOMAIN, "Short for Tonight", "Tonight");
                                 img = details[i][QStringLiteral("night")][QStringLiteral("weather")][QStringLiteral("img")].toString();
                                 info = details[i][QStringLiteral("night")][QStringLiteral("weather")][QStringLiteral("info")].toString();
                             } else {
@@ -294,63 +306,44 @@ IonInterface::WindDirections NmcCn::getWindDirection(const float degree) const
     if (degree < unit * 0) {
         qWarning(IONENGINE_NMCCN) << "Invalid degree" << degree;
         return VR;
-    }
-    else if(degree < unit * 0 + unit / 2) {
+    } else if (degree < unit * 0 + unit / 2) {
         return N;
-    }
-    else if(degree < unit * 1 + unit / 2) {
+    } else if (degree < unit * 1 + unit / 2) {
         return NNE;
-    }
-    else if(degree < unit * 2 + unit / 2) {
+    } else if (degree < unit * 2 + unit / 2) {
         return NE;
-    }
-    else if(degree < unit * 3 + unit / 2) {
+    } else if (degree < unit * 3 + unit / 2) {
         return ENE;
-    }
-    else if(degree < unit * 4 + unit / 2) {
+    } else if (degree < unit * 4 + unit / 2) {
         return E;
-    }
-    else if(degree < unit * 5 + unit / 2) {
+    } else if (degree < unit * 5 + unit / 2) {
         return ESE;
-    }
-    else if(degree < unit * 6 + unit / 2) {
+    } else if (degree < unit * 6 + unit / 2) {
         return SE;
-    }
-    else if(degree < unit * 7 + unit / 2) {
+    } else if (degree < unit * 7 + unit / 2) {
         return SSE;
-    }
-    else if(degree < unit * 8 + unit / 2) {
+    } else if (degree < unit * 8 + unit / 2) {
         return S;
-    }
-    else if(degree < unit * 9 + unit / 2) {
+    } else if (degree < unit * 9 + unit / 2) {
         return SSW;
-    }
-    else if(degree < unit * 10 + unit / 2) {
+    } else if (degree < unit * 10 + unit / 2) {
         return SW;
-    }
-    else if(degree < unit * 11 + unit / 2) {
+    } else if (degree < unit * 11 + unit / 2) {
         return WSW;
-    }
-    else if(degree < unit * 12 + unit / 2) {
+    } else if (degree < unit * 12 + unit / 2) {
         return W;
-    }
-    else if(degree < unit * 13 + unit / 2) {
+    } else if (degree < unit * 13 + unit / 2) {
         return WNW;
-    }
-    else if(degree < unit * 14 + unit / 2) {
+    } else if (degree < unit * 14 + unit / 2) {
         return NW;
-    }
-    else if(degree < unit * 15 + unit / 2) {
+    } else if (degree < unit * 15 + unit / 2) {
         return NNW;
-    }
-    else if(degree < unit * 16){
+    } else if (degree < unit * 16) {
         return N;
-    }
-    else if(degree == invalidValue.toDouble()){
+    } else if (degree == invalidValue.toDouble()) {
         qWarning(IONENGINE_NMCCN) << "Invalid degree" << degree;
         return VR;
-    }
-    else {
+    } else {
         qInfo(IONENGINE_NMCCN) << "Found degree greater than 360:" << degree;
         return getWindDirection(std::fmod(degree, 360));
     }

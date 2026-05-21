@@ -115,7 +115,7 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
 
                     MetaData metaData;
-                    metaData.setCredit(i18n("Source: National Meteorological Center of China"));
+                    metaData.setCredit(i18n("Source: %1", i18n("National Meteorological Center of China")));
                     metaData.setCreditURL(referer);
                     metaData.setTemperatureUnit(KUnitConversion::Celsius);
                     metaData.setWindSpeedUnit(KUnitConversion::MeterPerSecond);
@@ -151,11 +151,16 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                         const qreal pressure = passedchart.first()[QStringLiteral("pressure")].toDouble();
                         lastObservation.setPressure(pressure);
                     }
-                    lastObservation.setObservationTimestamp(QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("publish_time")].toString(), fullTimeFormat));
+                    lastObservation.setObservationTimestamp(
+                        QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("publish_time")].toString(), fullTimeFormat));
                     const QJsonObject weather = object[QStringLiteral("real")][QStringLiteral("weather")].toObject();
                     lastObservation.setCurrentConditions(weather[QStringLiteral("info")].toString());
-                    const QDateTime sunrise = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(), fullTimeFormat),
-                                    sunset = QDateTime::fromString(object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(), fullTimeFormat),
+                    const QDateTime sunrise = QDateTime::fromString(
+                                        object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunrise")].toString(),
+                                        fullTimeFormat),
+                                    sunset = QDateTime::fromString(
+                                        object[QStringLiteral("real")][QStringLiteral("sunriseSunset")][QStringLiteral("sunset")].toString(),
+                                        fullTimeFormat),
                                     now = QDateTime::currentDateTime();
                     const qreal windSpeed = object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("speed")].toDouble();
                     const bool currentIsNight = sunset <= now || now < sunrise,
@@ -167,7 +172,8 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     lastObservation.setWindchill(weather[QStringLiteral("feelst")].toDouble());
                     lastObservation.setHumidex(weather[QStringLiteral("feelst")].toDouble());
                     lastObservation.setWindSpeed(windSpeed);
-                    const QString windDirection = this->getWindDirection(this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble()));
+                    const QString windDirection = this->getWindDirection(
+                        this->getWindDirection(object[QStringLiteral("real")][QStringLiteral("wind")][QStringLiteral("degree")].toDouble()));
                     lastObservation.setWindDirection(windDirection);
                     lastObservation.setHumidity(weather[QStringLiteral("humidity")].toDouble());
                     forecast->setLastObservation(lastObservation);
@@ -321,63 +327,44 @@ Ion::WindDirections NmcCn::getWindDirection(const float degree) const
     if (degree < unit * 0) {
         qWarning(WEATHER::ION::NMCCN) << "Invalid degree" << degree;
         return VR;
-    }
-    else if(degree < unit * 0 + unit / 2) {
+    } else if (degree < unit * 0 + unit / 2) {
         return N;
-    }
-    else if(degree < unit * 1 + unit / 2) {
+    } else if (degree < unit * 1 + unit / 2) {
         return NNE;
-    }
-    else if(degree < unit * 2 + unit / 2) {
+    } else if (degree < unit * 2 + unit / 2) {
         return NE;
-    }
-    else if(degree < unit * 3 + unit / 2) {
+    } else if (degree < unit * 3 + unit / 2) {
         return ENE;
-    }
-    else if(degree < unit * 4 + unit / 2) {
+    } else if (degree < unit * 4 + unit / 2) {
         return E;
-    }
-    else if(degree < unit * 5 + unit / 2) {
+    } else if (degree < unit * 5 + unit / 2) {
         return ESE;
-    }
-    else if(degree < unit * 6 + unit / 2) {
+    } else if (degree < unit * 6 + unit / 2) {
         return SE;
-    }
-    else if(degree < unit * 7 + unit / 2) {
+    } else if (degree < unit * 7 + unit / 2) {
         return SSE;
-    }
-    else if(degree < unit * 8 + unit / 2) {
+    } else if (degree < unit * 8 + unit / 2) {
         return S;
-    }
-    else if(degree < unit * 9 + unit / 2) {
+    } else if (degree < unit * 9 + unit / 2) {
         return SSW;
-    }
-    else if(degree < unit * 10 + unit / 2) {
+    } else if (degree < unit * 10 + unit / 2) {
         return SW;
-    }
-    else if(degree < unit * 11 + unit / 2) {
+    } else if (degree < unit * 11 + unit / 2) {
         return WSW;
-    }
-    else if(degree < unit * 12 + unit / 2) {
+    } else if (degree < unit * 12 + unit / 2) {
         return W;
-    }
-    else if(degree < unit * 13 + unit / 2) {
+    } else if (degree < unit * 13 + unit / 2) {
         return WNW;
-    }
-    else if(degree < unit * 14 + unit / 2) {
+    } else if (degree < unit * 14 + unit / 2) {
         return NW;
-    }
-    else if(degree < unit * 15 + unit / 2) {
+    } else if (degree < unit * 15 + unit / 2) {
         return NNW;
-    }
-    else if(degree < unit * 16){
+    } else if (degree < unit * 16) {
         return N;
-    }
-    else if(degree == invalidValue.toDouble()){
+    } else if (degree == invalidValue.toDouble()) {
         qWarning(WEATHER::ION::NMCCN) << "Invalid degree" << degree;
         return VR;
-    }
-    else {
+    } else {
         qInfo(WEATHER::ION::NMCCN) << "Found degree greater than 360:" << degree;
         return getWindDirection(std::fmod(degree, 360));
     }
