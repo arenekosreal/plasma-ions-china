@@ -80,7 +80,7 @@ private:
     static const MetaData getMetaData(const QString &credit, const QString &creditUrl);
     static int getIndexValue(const QJsonObject &indexResponse, const IndexType indexType, int defaultValue = -1);
     static const QJsonObject extractResponse(QNetworkReply *reply);
-    static void updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse);
+    static void updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse, const QString &info);
     static qreal getWindChill(const qreal temperature, const qreal windSpeed);
     static qreal getHeatIndexFromHumidity(const qreal temperature, const qreal humidity);
     static qreal getHeatIndexFromDewpoint(const qreal temperature, const qreal dewpoint);

@@ -186,7 +186,9 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
         updateFutureDays(futureDays, daysResponse);
         forecast->setFutureDays(futureDays);
         std::shared_ptr<Warnings> warnings = std::make_shared<Warnings>();
-        updateWarnings(warnings, warningResponse);
+        updateWarnings(warnings,
+                       warningResponse,
+                       nowResponse[QStringLiteral("fxLink")].toString().replace(QStringLiteral("/weather/"), QStringLiteral("/severe-weather/")));
         forecast->setWarnings(warnings);
         promise->addResult(forecast);
         promise->finish();
@@ -389,7 +391,7 @@ void QWeather::updateFutureDays(std::shared_ptr<FutureDays> futureDays, const QJ
     }
 }
 
-void QWeather::updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse)
+void QWeather::updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse, const QString &info)
 {
     if (warnings == nullptr) {
         qWarning(WEATHER::ION::QWEATHER) << "warnings is nullptr.";
@@ -398,7 +400,6 @@ void QWeather::updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObj
     for (const QJsonValue &alert : warningsResponse[QStringLiteral("alerts")].toArray()) {
         const QDateTime issuedTime = QDateTime::fromString(alert[QStringLiteral("issuedTime")].toString(), Qt::ISODate);
         const QString description = alert[QStringLiteral("headline")].toString();
-        const QString info = alert[QStringLiteral("description")].toString();
         Warning warning(getPriority(alert[QStringLiteral("severity")].toString()), description);
         warning.setInfo(info);
         warning.setTimestamp(issuedTime.toString());
