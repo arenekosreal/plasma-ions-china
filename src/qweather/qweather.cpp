@@ -73,16 +73,9 @@ void QWeather::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> 
                 const QString country = location[QStringLiteral("country")].toString();
                 const QString displayName =
                     region.startsWith(place) ? QStringLiteral("%1-%2").arg(region, station) : QStringLiteral("%1-%2-%3").arg(region, place, station);
-                Station toBeSerialized;
-                toBeSerialized.setRegion(region);
-                toBeSerialized.setPlace(station);
-                toBeSerialized.setStation(station);
-                toBeSerialized.setCountry(country);
-                toBeSerialized.setCoordinates(lat, lon);
-                toBeSerialized.setNewPlaceInfo(locationId);
                 Location toBeAdded;
                 toBeAdded.setDisplayName(displayName);
-                toBeAdded.setPlaceInfo(serialize(toBeSerialized));
+                toBeAdded.setPlaceInfo(locationId);
                 toBeAdded.setStation(station);
                 toBeAdded.setCoordinates(QPointF(lat, lon));
                 locations->addLocation(toBeAdded);
@@ -109,90 +102,93 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
         return;
     }
     qDebug(WEATHER::ION::QWEATHER) << "Fetching forecast for place info" << placeInfo;
-    const Station deserialized = deserialize(placeInfo);
-
-    QUrlQuery nowQuery;
-    nowQuery.addQueryItem(QStringLiteral("location"), deserialized.newPlaceInfo().toString());
-    const QNetworkRequest nowRequest = makeApiRequest(QStringLiteral("/v7/weather/now"), nowQuery);
-    QNetworkReply *nowReply = networkAccessManager.get(nowRequest);
-    QFuture<void> nowFinished = QtFuture::connect(nowReply, &QNetworkReply::finished);
-
-    QUrlQuery daysQuery;
-    daysQuery.addQueryItem(QStringLiteral("location"), deserialized.newPlaceInfo().toString());
-    const QNetworkRequest daysRequest = makeApiRequest(QStringLiteral("/v7/weather/7d"), daysQuery);
-    QNetworkReply *daysReply = networkAccessManager.get(daysRequest);
-    QFuture<void> daysFinished = QtFuture::connect(daysReply, &QNetworkReply::finished);
-
-    const QString warningRequestPath =
-        QStringLiteral("/weatheralert/v1/current/%1/%2").arg(deserialized.latitude().toDouble(), 0, 'f', 2).arg(deserialized.longitude().toDouble(), 0, 'f', 2);
-    const QNetworkRequest warningRequest = makeApiRequest(warningRequestPath);
-    QNetworkReply *warningReply = networkAccessManager.get(warningRequest);
-    QFuture<void> warningFinished = QtFuture::connect(warningReply, &QNetworkReply::finished);
-
-    QUrlQuery indexQuery;
-    indexQuery.addQueryItem(QStringLiteral("location"), deserialized.newPlaceInfo().toString());
-    indexQuery.addQueryItem(QStringLiteral("type"), QString::number(IndexType::UV));
-    const QNetworkRequest indexRequest = makeApiRequest(QStringLiteral("/v7/indices/1d"), indexQuery);
-    QNetworkReply *indexReply = networkAccessManager.get(indexRequest);
-    QFuture<void> indexFinished = QtFuture::connect(indexReply, &QNetworkReply::finished);
-
-    QFuture<void> everythingFinished = QtFuture::whenAll(nowFinished, daysFinished, warningFinished, indexFinished);
-    everythingFinished.then(this, [=]() {
-        const QJsonObject nowResponse = extractResponse(nowReply);
-        qDebug(WEATHER::ION::QWEATHER) << "Got now response" << nowResponse;
-        if (nowResponse.isEmpty()) {
-            promise->finish();
-            onNetworkError();
-            return;
-        }
-        const QJsonObject daysResponse = extractResponse(daysReply);
-        qDebug(WEATHER::ION::QWEATHER) << "Got days response" << daysResponse;
-        if (daysResponse.isEmpty()) {
-            promise->finish();
-            onNetworkError();
-            return;
-        }
-        const QJsonObject warningResponse = extractResponse(warningReply);
-        qDebug(WEATHER::ION::QWEATHER) << "Got warning response" << warningResponse;
-        if (warningResponse.isEmpty()) {
-            promise->finish();
-            onNetworkError();
-            return;
-        }
-        const QJsonObject indexResponse = extractResponse(indexReply);
-        qDebug(WEATHER::ION::QWEATHER) << "Got index response" << indexResponse;
-        if (indexResponse.isEmpty()) {
-            promise->finish();
-            onNetworkError();
-            return;
-        }
-        std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
-        QString credit;
-        const QJsonArray sources = nowResponse[QStringLiteral("refer")][QStringLiteral("sources")].toArray();
-        if (!sources.isEmpty()) {
-            const int count = sources.count();
-            for (int i = 0; i < count; i++) {
-                credit += sources.at(i).toString();
-                if (i != count - 1)
-                    credit += QStringLiteral(", ");
+    std::shared_ptr<Forecast> forecast = std::make_shared<Forecast>();
+    QUrlQuery locationQuery;
+    locationQuery.addQueryItem(QStringLiteral("location"), placeInfo);
+    const QNetworkRequest locationRequest = makeApiRequest(QStringLiteral("/geo/v2/city/lookup"), locationQuery);
+    QNetworkReply *locationReply = networkAccessManager.get(locationRequest);
+    connect(
+        locationReply,
+        &QNetworkReply::finished,
+        this,
+        [=]() {
+            const QJsonObject response = extractResponse(locationReply);
+            qDebug(WEATHER::ION::QWEATHER) << "Got response" << response;
+            if (response.isEmpty()) {
+                qWarning(WEATHER::ION::QWEATHER) << "Unable to get valid response object.";
+                promise->finish();
+                onNetworkError();
+                return;
             }
-        } else {
-            credit = i18n("QWeather");
-        }
-        forecast->setMetadata(getMetaData(i18n("Source: %1", credit), nowResponse[QStringLiteral("fxLink")].toString()));
-        forecast->setStation(stripNewPlaceInfo(deserialized));
-        forecast->setLastObservation(getLastObservation(nowResponse, getIndexValue(indexResponse, IndexType::UV, -1)));
-        std::shared_ptr<FutureDays> futureDays = std::make_shared<FutureDays>();
-        updateFutureDays(futureDays, daysResponse);
-        forecast->setFutureDays(futureDays);
-        std::shared_ptr<Warnings> warnings = std::make_shared<Warnings>();
-        updateWarnings(warnings,
-                       warningResponse,
-                       nowResponse[QStringLiteral("fxLink")].toString().replace(QStringLiteral("/weather/"), QStringLiteral("/severe-weather/")));
-        forecast->setWarnings(warnings);
-        promise->addResult(forecast);
-        promise->finish();
-    });
+            const QJsonValue matched = response[QStringLiteral("location")].toArray().first();
+            qDebug(WEATHER::ION::QWEATHER) << "Got location" << matched;
+            MetaData metaData;
+            metaData.setCredit(i18n("Source: %1", i18n("QWeather")));
+            metaData.setCreditURL(matched[QStringLiteral("fxLink")].toString());
+            metaData.setTemperatureUnit(temperatureUnit);
+            metaData.setWindSpeedUnit(windSpeedUnit);
+            metaData.setVisibilityUnit(visibilityUnit);
+            metaData.setPressureUnit(pressureUnit);
+            metaData.setHumidityUnit(humidityUnit);
+            metaData.setRainfallUnit(preciptionUnit);
+            metaData.setSnowfallUnit(preciptionUnit);
+            metaData.setPrecipUnit(preciptionUnit);
+            forecast->setMetadata(metaData);
+
+            Station station;
+            station.setStation(matched[QStringLiteral("name")].toString());
+            station.setPlace(matched[QStringLiteral("name")].toString());
+            station.setRegion(matched[QStringLiteral("adm1")].toString());
+            station.setCountry(matched[QStringLiteral("country")].toString());
+            station.setCoordinates(matched[QStringLiteral("lat")].toString().toDouble(), matched[QStringLiteral("lon")].toString().toDouble());
+            forecast->setStation(station);
+            const QNetworkRequest currentRequest = makeApiRequest(
+                QStringLiteral("/weather/v1/current/%1/%2").arg(station.latitude().toDouble(), 0, 'f', 2).arg(station.longitude().toDouble(), 0, 'f', 2));
+            QNetworkReply *currentReply = networkAccessManager.get(currentRequest);
+            const QNetworkRequest dailyRequest = makeApiRequest(
+                QStringLiteral("/weather/v1/daily/%1/%2").arg(station.latitude().toDouble(), 0, 'f', 2).arg(station.longitude().toDouble(), 0, 'f', 2));
+            QNetworkReply *dailyReply = networkAccessManager.get(dailyRequest);
+            const QNetworkRequest warningRequest = makeApiRequest(
+                QStringLiteral("/weatheralert/v1/current/%1/%2").arg(station.latitude().toDouble(), 0, 'f', 2).arg(station.longitude().toDouble(), 0, 'f', 2));
+            QNetworkReply *warningReply = networkAccessManager.get(warningRequest);
+            QFuture<void> everythingFinished = QtFuture::whenAll(QtFuture::connect(currentReply, &QNetworkReply::finished),
+                                                                 QtFuture::connect(dailyReply, &QNetworkReply::finished),
+                                                                 QtFuture::connect(warningReply, &QNetworkReply::finished));
+            everythingFinished.then(this, [=] {
+                const QJsonObject currentResponse = extractResponse(currentReply);
+                qDebug(WEATHER::ION::QWEATHER) << "Got response for current weather" << currentResponse;
+                if (currentResponse.isEmpty()) {
+                    qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current weather";
+                    promise->finish();
+                    onNetworkError();
+                    return;
+                }
+                const QJsonObject dailyResponse = extractResponse(dailyReply);
+                qDebug(WEATHER::ION::QWEATHER) << "Got response for daily weather" << dailyResponse;
+                if (dailyResponse.isEmpty()) {
+                    qWarning(WEATHER::ION::QWEATHER) << "Got empty response for daily weather";
+                    promise->finish();
+                    onNetworkError();
+                    return;
+                }
+                const QJsonObject warningResponse = extractResponse(warningReply);
+                qDebug(WEATHER::ION::QWEATHER) << "Got response for current warnings" << warningResponse;
+                if (warningResponse.isEmpty()) {
+                    qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current warnings";
+                    promise->finish();
+                    onNetworkError();
+                    return;
+                }
+                const QString warningUrl = QString(forecast->metaData().value<MetaData>().creditURL().toString())
+                                               .replace(QStringLiteral("/weather/"), QStringLiteral("/severe-weather/"));
+                if (fillCurrentWeather(forecast, currentResponse) && fillDailyWeather(forecast, dailyResponse)
+                    && fillWarnings(forecast, warningResponse, warningUrl)) {
+                    promise->addResult(forecast);
+                }
+                promise->finish();
+            });
+        },
+        signalConnectionType);
 }
 
 const QString QWeather::getJwtToken(const qint64 iatOffset, const qint64 expOffset) const
@@ -275,35 +271,6 @@ void QWeather::onNetworkError()
         qWarning(WEATHER::ION::QWEATHER) << "Too many errors";
 }
 
-const MetaData QWeather::getMetaData(const QString &credit, const QString &creditUrl)
-{
-    MetaData metaData;
-    metaData.setCredit(credit);
-    metaData.setCreditURL(creditUrl);
-    metaData.setTemperatureUnit(temperatureUnit);
-    metaData.setWindSpeedUnit(windSpeedUnit);
-    metaData.setVisibilityUnit(visibilityUnit);
-    metaData.setPressureUnit(pressureUnit);
-    metaData.setHumidityUnit(humidityUnit);
-    metaData.setRainfallUnit(preciptionUnit);
-    metaData.setSnowfallUnit(preciptionUnit);
-    metaData.setPrecipUnit(preciptionUnit);
-    return metaData;
-}
-
-int QWeather::getIndexValue(const QJsonObject &indexResponse, const IndexType indexType, int defaultValue)
-{
-    for (const QJsonValue &index : indexResponse[QStringLiteral("daily")].toArray()) {
-        const int type = index[QStringLiteral("type")].toString().toInt();
-        if (type == indexType) {
-            bool ok;
-            const int level = index[QStringLiteral("level")].toString().toInt(&ok);
-            return ok ? level : defaultValue;
-        }
-    }
-    return defaultValue;
-}
-
 const QJsonObject QWeather::extractResponse(QNetworkReply *reply)
 {
     // Check https://dev.qweather.com/docs/resource/error-code/ for more info.
@@ -358,85 +325,6 @@ const QJsonObject QWeather::extractResponse(QNetworkReply *reply)
         reply->deleteLater();
     }
     return QJsonObject();
-}
-
-void QWeather::updateFutureDays(std::shared_ptr<FutureDays> futureDays, const QJsonObject &futureDaysResponse)
-{
-    if (futureDays == nullptr) {
-        qWarning(WEATHER::ION::QWEATHER) << "futureDays is nullptr.";
-        return;
-    }
-    QLocale locale;
-    for (const QJsonValue &daily : futureDaysResponse[QStringLiteral("daily")].toArray()) {
-        FutureDayForecast forecast;
-        FutureForecast daytime, night;
-        const QDate fxDate = QDate::fromString(daily[QStringLiteral("fxDate")].toString(), Qt::ISODate);
-        qDebug(WEATHER::ION::QWEATHER) << "Adding forecast for date" << fxDate;
-        qDebug(WEATHER::ION::QWEATHER) << "Raw date is" << daily[QStringLiteral("fxDate")];
-        qDebug(WEATHER::ION::QWEATHER) << "Days in month is" << fxDate.daysInMonth() << "; Day of week is" << fxDate.dayOfWeek() << "; Localized day of week is"
-                                       << locale.dayName(fxDate.dayOfWeek());
-        const int windScaleDay = daily[QStringLiteral("windScaleDay")].toString().split(QStringLiteral("-")).last().toInt();
-        const int windScaleNight = daily[QStringLiteral("windScaleNight")].toString().split(QStringLiteral("-")).last().toInt();
-        forecast.setMonthDay(fxDate.day());
-        forecast.setWeekDay(locale.dayName(fxDate.dayOfWeek()));
-        daytime.setConditionIcon(Ion::getWeatherIcon(getWeatherIcon(daily[QStringLiteral("iconDay")].toString(), windScaleDay >= 2)));
-        daytime.setCondition(daily[QStringLiteral("textDay")].toString());
-        daytime.setHighTemp(daily[QStringLiteral("tempMax")].toString().toDouble());
-        forecast.setDaytime(daytime);
-        night.setConditionIcon(Ion::getWeatherIcon(getWeatherIcon(daily[QStringLiteral("iconNight")].toString(), windScaleNight >= 2)));
-        night.setCondition(daily[QStringLiteral("textNight")].toString());
-        night.setLowTemp(daily[QStringLiteral("tempMin")].toString().toDouble());
-        forecast.setNight(night);
-        futureDays->addDay(forecast);
-    }
-}
-
-void QWeather::updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse, const QString &info)
-{
-    if (warnings == nullptr) {
-        qWarning(WEATHER::ION::QWEATHER) << "warnings is nullptr.";
-        return;
-    }
-    for (const QJsonValue &alert : warningsResponse[QStringLiteral("alerts")].toArray()) {
-        const QDateTime issuedTime = QDateTime::fromString(alert[QStringLiteral("issuedTime")].toString(), Qt::ISODate);
-        const QString description = alert[QStringLiteral("headline")].toString();
-        Warning warning(getPriority(alert[QStringLiteral("severity")].toString()), description);
-        warning.setInfo(info);
-        warning.setTimestamp(issuedTime.toString());
-        warnings->addWarning(warning);
-    }
-}
-
-const LastObservation QWeather::getLastObservation(const QJsonObject &response, const int uvIndex) const
-{
-    const int windScale = response[QStringLiteral("now")][QStringLiteral("windScale")].toString().split(QStringLiteral("-")).last().toInt();
-    const double temperature = response[QStringLiteral("now")][QStringLiteral("temp")].toString().toDouble();
-    const double windSpeed = response[QStringLiteral("now")][QStringLiteral("windSpeed")].toString().toDouble();
-    const int humidity = response[QStringLiteral("now")][QStringLiteral("humidity")].toString().toInt();
-    bool ok;
-    double dewpoint = response[QStringLiteral("now")][QStringLiteral("dew")].toString().toDouble(&ok);
-    dewpoint = ok ? dewpoint : getDewpoint(temperature, humidity);
-    const qreal humidex = getHumidex(temperature, dewpoint);
-    const qreal visibility = response[QStringLiteral("now")][QStringLiteral("vis")].toString().toDouble();
-    LastObservation ret;
-    ret.setObservationTimestamp(QDateTime::fromString(response[QStringLiteral("now")][QStringLiteral("obsTime")].toString(), Qt::ISODate));
-    ret.setCurrentConditions(response[QStringLiteral("now")][QStringLiteral("text")].toString());
-    ret.setConditionIcon(Ion::getWeatherIcon(getWeatherIcon(response[QStringLiteral("now")][QStringLiteral("icon")].toString(), windScale >= 2)));
-    ret.setTemperature(temperature);
-    ret.setWindchill(getWindChill(temperature, windSpeed));
-    ret.setHeatIndex(getHeatIndexFromHumidity(temperature, humidity));
-    ret.setHumidex(humidex);
-    ret.setHumidex(getHumidex(humidex));
-    ret.setWindSpeed(windSpeed);
-    ret.setWindDirection(getWindDirectionIcon(getWindDirectionIcon(response[QStringLiteral("now")][QStringLiteral("wind360")].toString().toDouble())));
-    ret.setVisibility(visibility);
-    ret.setVisibility(getVisibility(visibility));
-    ret.setPressure(response[QStringLiteral("now")][QStringLiteral("pressure")].toString().toDouble());
-    if (uvIndex >= 0)
-        ret.setUVIndex(uvIndex);
-    ret.setHumidity(humidity);
-    ret.setDewpoint(dewpoint);
-    return ret;
 }
 
 Ion::ConditionIcons QWeather::getWeatherIcon(const QString &icon, const bool windy) const
@@ -512,155 +400,8 @@ Ion::ConditionIcons QWeather::getWeatherIcon(const QString &icon, const bool win
     });
     return conditionsMap.value(icon, conditionsMap.values().last());
 }
-// TODO: Calculating instead comparing.
-Ion::WindDirections QWeather::getWindDirectionIcon(const double degree) const
-{
-    const double unit = 360.0 / 16;
-    if (degree < unit * 0) {
-        qWarning(WEATHER::ION::QWEATHER) << "Invalid degree" << degree;
-        return Ion::VR;
-    } else if (degree < unit * 0 + unit / 2) {
-        return Ion::N;
-    } else if (degree < unit * 1 + unit / 2) {
-        return Ion::NNE;
-    } else if (degree < unit * 2 + unit / 2) {
-        return Ion::NE;
-    } else if (degree < unit * 3 + unit / 2) {
-        return Ion::ENE;
-    } else if (degree < unit * 4 + unit / 2) {
-        return Ion::E;
-    } else if (degree < unit * 5 + unit / 2) {
-        return Ion::ESE;
-    } else if (degree < unit * 6 + unit / 2) {
-        return Ion::SE;
-    } else if (degree < unit * 7 + unit / 2) {
-        return Ion::SSE;
-    } else if (degree < unit * 8 + unit / 2) {
-        return Ion::S;
-    } else if (degree < unit * 9 + unit / 2) {
-        return Ion::SSW;
-    } else if (degree < unit * 10 + unit / 2) {
-        return Ion::SW;
-    } else if (degree < unit * 11 + unit / 2) {
-        return Ion::WSW;
-    } else if (degree < unit * 12 + unit / 2) {
-        return Ion::W;
-    } else if (degree < unit * 13 + unit / 2) {
-        return Ion::WNW;
-    } else if (degree < unit * 14 + unit / 2) {
-        return Ion::NW;
-    } else if (degree < unit * 15 + unit / 2) {
-        return Ion::NNW;
-    } else if (degree < unit * 16) {
-        return Ion::N;
-    } else {
-        qInfo(WEATHER::ION::QWEATHER) << "Found degree greater than 360:" << degree;
-        return getWindDirectionIcon(std::fmod(degree, 360));
-    }
-}
 
-// A simple copy of QString Ion::getWindDirectionIcon(const QMap<QString, WindDirections> &windDirList, const QString &windDirection) const
-const QString QWeather::getWindDirectionIcon(const Ion::WindDirections windDirection) const
-{
-    switch (windDirection) {
-    case Ion::N:
-        return QStringLiteral("N");
-    case Ion::NNE:
-        return QStringLiteral("NNE");
-    case Ion::NE:
-        return QStringLiteral("NE");
-    case Ion::ENE:
-        return QStringLiteral("ENE");
-    case Ion::E:
-        return QStringLiteral("E");
-    case Ion::SSE:
-        return QStringLiteral("SSE");
-    case Ion::SE:
-        return QStringLiteral("SE");
-    case Ion::ESE:
-        return QStringLiteral("ESE");
-    case Ion::S:
-        return QStringLiteral("S");
-    case Ion::NNW:
-        return QStringLiteral("NNW");
-    case Ion::NW:
-        return QStringLiteral("NW");
-    case Ion::WNW:
-        return QStringLiteral("WNW");
-    case Ion::W:
-        return QStringLiteral("W");
-    case Ion::SSW:
-        return QStringLiteral("SSW");
-    case Ion::SW:
-        return QStringLiteral("SW");
-    case Ion::WSW:
-        return QStringLiteral("WSW");
-    case Ion::VR:
-        return QStringLiteral("VR"); // For now, we'll make a variable wind icon later on
-    }
-
-    // No icon available, use 'X'
-    return QString();
-}
-
-qreal QWeather::getWindChill(const qreal temperature, const qreal windSpeed)
-{
-    const qreal temperatureNormalized = KUnitConversion::Value(temperature, temperatureUnit).convertTo(KUnitConversion::Celsius).number();
-    const qreal windSpeedNormalized = KUnitConversion::Value(windSpeed, windSpeedUnit).convertTo(KUnitConversion::KilometerPerHour).number();
-    // https://en.wikipedia.org/wiki/Wind_chill#North_American_and_United_Kingdom_wind_chill_index
-    double pow = qPow(windSpeedNormalized, 0.16);
-    return 13.12 + 0.6215 * temperatureNormalized - 11.37 * pow + 0.3965 * temperatureNormalized * pow;
-}
-
-qreal QWeather::getHeatIndexFromHumidity(const qreal temperature, const qreal humidity)
-{
-    const qreal temperatureNormalized = KUnitConversion::Value(temperature, temperatureUnit).convertTo(KUnitConversion::Celsius).number();
-    const qreal humidityNormalized = KUnitConversion::Value(humidity, humidityUnit).convertTo(KUnitConversion::Percent).number();
-    if (temperatureNormalized < 26.66 || humidityNormalized < 40) {
-        qDebug(WEATHER::ION::QWEATHER) << "Temperature or Humidity is too low.";
-        return 0;
-    }
-    // https://en.wikipedia.org/wiki/Heat_index#Formula
-    const double c1 = -8.78469475556, c2 = 1.61139411, c3 = 2.33854883889, c4 = -0.14611605, c5 = -0.012308094, c6 = -0.0164248277778, c7 = 2.211732e-3,
-                 c8 = 7.2546e-4, c9 = -3.582e-6;
-    return c1 + c2 * temperatureNormalized + c3 * humidityNormalized + c4 * temperatureNormalized * humidityNormalized + c5 * qPow(temperatureNormalized, 2)
-        + c6 * qPow(humidityNormalized, 2) + c7 + qPow(temperatureNormalized, 2) * humidityNormalized + c8 * temperatureNormalized * qPow(humidityNormalized, 2)
-        + c9 * qPow(temperatureNormalized, 2) * qPow(humidityNormalized, 2);
-}
-
-const QString QWeather::getHumidex(const qreal humidexValue)
-{
-    // https://en.wikipedia.org/wiki/Humidex
-    if (humidexValue <= 29)
-        return i18n("Little to no discomfort");
-    else if (humidexValue <= 39)
-        return i18n("Some discomfort");
-    else if (humidexValue <= 45)
-        return i18n("Great discomfort; avoid exertion");
-    else
-        return i18n("Dangerous; heat stroke quite possible");
-}
-
-qreal QWeather::getHumidex(const qreal temperature, const qreal dewpoint)
-{
-    const qreal temperatureNormalized = KUnitConversion::Value(temperature, temperatureUnit).convertTo(KUnitConversion::Celsius).number();
-    const qreal dewpointNormalized = KUnitConversion::Value(dewpoint, temperatureUnit).convertTo(KUnitConversion::Kelvin).number();
-    // https://en.wikipedia.org/wiki/Humidex#Computation_formula
-    const qreal e = 6.11 * qExp(5417.7530 * (1 / 273.16 - 1 / dewpointNormalized));
-    return temperatureNormalized + 0.5555 * (e - 10.0);
-}
-
-qreal QWeather::getDewpoint(const qreal temperature, const qreal humidity)
-{
-    const qreal temperatureNormalized = KUnitConversion::Value(temperature, temperatureUnit).convertTo(KUnitConversion::Celsius).number();
-    const qreal humidityNormalized = KUnitConversion::Value(humidity, humidityUnit).convertTo(KUnitConversion::Percent).number();
-    // https://en.wikipedia.org/wiki/Dew_point#Calculating_the_dew_point
-    const double b = 17.625, c = 243.04;
-    const qreal gramma = qLn(humidityNormalized / 100) + b * temperatureNormalized / (c + temperatureNormalized);
-    return c * gramma / (b - gramma);
-}
-
-Warnings::PriorityClass QWeather::getPriority(const QString &severity)
+Warnings::PriorityClass QWeather::getPriority(const QString &severity) const
 {
     // https://dev.qweather.com/docs/resource/warning-info/#severity
     if (severity == QStringLiteral("extreme"))
@@ -673,59 +414,110 @@ Warnings::PriorityClass QWeather::getPriority(const QString &severity)
         return Warnings::Low;
 }
 
-const QString QWeather::getVisibility(const qreal visibilityValue)
+bool QWeather::fillCurrentWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &currentResponse)
 {
-    const qreal visibilityValueNormalized = KUnitConversion::Value(visibilityValue, visibilityUnit).convertTo(KUnitConversion::Meter).number();
-    // https://www.cma.gov.cn/zfxxgk/gknr/flfgbz/bz/202209/P020220921580375165432.pdf
-    if (visibilityValueNormalized < 50)
-        return i18n("Extremely Poor");
-    else if (visibilityValueNormalized < 500)
-        return i18n("Poor");
-    else if (visibilityValueNormalized < 1000)
-        return i18n("Relatively Poor");
-    else if (visibilityValueNormalized < 2000)
-        return i18n("General");
-    else if (visibilityValueNormalized < 10000)
-        return i18n("Good");
-    else
-        return i18n("Excellent");
+    const bool windy = currentResponse[QStringLiteral("wind")][QStringLiteral("scale")].toInt() > 2;
+    LastObservation lo;
+    lo.setCurrentConditions(currentResponse[QStringLiteral("condition")][QStringLiteral("text")].toString());
+    lo.setConditionIcon(Ion::getWeatherIcon(getWeatherIcon(currentResponse[QStringLiteral("condition")][QStringLiteral("code")].toString(), windy)));
+    lo.setTemperature(currentResponse[QStringLiteral("temperature")][QStringLiteral("value")].toDouble());
+    lo.setWindSpeed(currentResponse[QStringLiteral("wind")][QStringLiteral("speed")][QStringLiteral("value")].toDouble());
+    lo.setWindGust(currentResponse[QStringLiteral("windGust")][QStringLiteral("value")].toDouble());
+    lo.setWindDirection(currentResponse[QStringLiteral("wind")][QStringLiteral("direction")][QStringLiteral("compass")].toString().toUpper());
+    lo.setVisibility(currentResponse[QStringLiteral("visibility")][QStringLiteral("value")].toDouble());
+    lo.setPressure(currentResponse[QStringLiteral("pressure")][QStringLiteral("value")].toDouble());
+    lo.setUVIndex(currentResponse[QStringLiteral("uvIndex")].toInt());
+    lo.setHumidity(currentResponse[QStringLiteral("humidity")].toDouble() * 100);
+    lo.setDewpoint(currentResponse[QStringLiteral("dewPoint")][QStringLiteral("value")].toDouble());
+    forecast->setLastObservation(lo);
+    return lo.currentConditions().isValid() && lo.conditionIcon().isValid() && lo.temperature().isValid();
 }
 
-const QString serialize(const Station &station)
+bool QWeather::fillDailyWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &dailyResponse)
 {
-    QJsonObject json;
-    json[QStringLiteral("station")] = QJsonValue::fromVariant(station.station());
-    json[QStringLiteral("place")] = QJsonValue::fromVariant(station.place());
-    json[QStringLiteral("region")] = QJsonValue::fromVariant(station.region());
-    json[QStringLiteral("country")] = QJsonValue::fromVariant(station.country());
-    json[QStringLiteral("latitude")] = QJsonValue::fromVariant(station.latitude());
-    json[QStringLiteral("longitude")] = QJsonValue::fromVariant(station.longitude());
-    json[QStringLiteral("placeInfo")] = QJsonValue::fromVariant(station.newPlaceInfo());
-    return QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    std::shared_ptr<FutureDays> fd = std::make_shared<FutureDays>();
+    bool success = true;
+    for (const QJsonValue day : dailyResponse[QStringLiteral("days")].toArray()) {
+        FutureDayForecast fdf;
+        FutureForecast daytime, nighttime;
+        const bool daytimeWindy = day[QStringLiteral("daytime")][QStringLiteral("wind")][QStringLiteral("scale")].toInt() > 2,
+                   nighttimeWindy = day[QStringLiteral("nighttime")][QStringLiteral("wind")][QStringLiteral("scale")].toInt() > 2;
+        daytime.setConditionIcon(
+            Ion::getWeatherIcon(getWeatherIcon(day[QStringLiteral("daytime")][QStringLiteral("condition")][QStringLiteral("code")].toString(), daytimeWindy)));
+        daytime.setCondition(day[QStringLiteral("daytime")][QStringLiteral("condition")][QStringLiteral("text")].toString());
+        daytime.setHighTemp(day[QStringLiteral("daytime")][QStringLiteral("temperatureMax")][QStringLiteral("value")].toDouble());
+        daytime.setLowTemp(day[QStringLiteral("daytime")][QStringLiteral("temperatureMin")][QStringLiteral("value")].toDouble());
+        if (day[QStringLiteral("daytime")][QStringLiteral("precipitation")][QStringLiteral("amount")][QStringLiteral("value")].toDouble() > 0) {
+            const double precipitationProbability =
+                day[QStringLiteral("daytime")][QStringLiteral("precipitation")][QStringLiteral("probability")].toDouble() * 100;
+            daytime.setConditionProbability(precipitationProbability);
+        }
+        success = success && !daytime.condition().value().isEmpty();
+        if (!success)
+            break;
+        fdf.setDaytime(daytime);
+        nighttime.setConditionIcon(Ion::getWeatherIcon(
+            getWeatherIcon(day[QStringLiteral("nighttime")][QStringLiteral("condition")][QStringLiteral("code")].toString(), nighttimeWindy)));
+        nighttime.setCondition(day[QStringLiteral("nighttime")][QStringLiteral("condition")][QStringLiteral("text")].toString());
+        nighttime.setHighTemp(day[QStringLiteral("nighttime")][QStringLiteral("temperatureMax")][QStringLiteral("value")].toDouble());
+        nighttime.setLowTemp(day[QStringLiteral("nighttime")][QStringLiteral("temperatureMin")][QStringLiteral("value")].toDouble());
+        if (day[QStringLiteral("nighttime")][QStringLiteral("precipitation")][QStringLiteral("amount")][QStringLiteral("value")].toDouble() > 0) {
+            const double precipitationProbability =
+                day[QStringLiteral("nighttime")][QStringLiteral("precipitation")][QStringLiteral("probability")].toDouble() * 100;
+            nighttime.setConditionProbability(precipitationProbability);
+        }
+        success = success && !nighttime.condition().value().isEmpty();
+        if (!success)
+            break;
+        fdf.setNight(nighttime);
+        const QDateTime forecastTime = QDateTime::fromString(day[QStringLiteral("forecastStartTime")].toString(), dateFormat).toLocalTime();
+        qDebug(WEATHER::ION::QWEATHER) << "Got future forecast for" << forecastTime;
+        fdf.setMonthDay(forecastTime.date().day());
+        fdf.setWeekDay(QLocale().dayName(forecastTime.date().dayOfWeek()));
+        success = success && fdf.monthDay().value() > 0;
+        if (!success)
+            break;
+        fd->addDay(fdf);
+    }
+    if (success) {
+        forecast->setFutureDays(fd);
+    }
+    return success;
 }
 
-const Station deserialize(const QString &serialized)
+bool QWeather::fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObject &warningsResponse, const QString &warningUrl)
 {
-    const QJsonDocument json = QJsonDocument::fromJson(serialized.toUtf8());
-    Station station;
-    station.setStation(json[QStringLiteral("station")].toString());
-    station.setPlace(json[QStringLiteral("place")].toString());
-    station.setRegion(json[QStringLiteral("region")].toString());
-    station.setCountry(json[QStringLiteral("country")].toString());
-    station.setCoordinates(json[QStringLiteral("latitude")].toDouble(), json[QStringLiteral("longitude")].toDouble());
-    station.setNewPlaceInfo(json[QStringLiteral("placeInfo")].toString());
-    return station;
-}
-
-const Station stripNewPlaceInfo(const Station &station)
-{
-    Station ret;
-    ret.setStation(station.station().toString());
-    ret.setPlace(station.place().toString());
-    ret.setRegion(station.region().toString());
-    ret.setCountry(station.country().toString());
-    ret.setCoordinates(station.latitude().toDouble(), station.longitude().toDouble());
-    return ret;
+    std::shared_ptr<Warnings> warnings = std::make_shared<Warnings>();
+    bool success = true;
+    QMap<const QString, Warning> merged;
+    for (const QJsonValue warning : warningsResponse[QStringLiteral("alerts")].toArray()) {
+        const QString id = warning[QStringLiteral("id")].toString();
+        if (!merged.contains(id)) {
+            const QString timestamp =
+                QLocale().toString(QDateTime::fromString(warning[QStringLiteral("issuedTime")].toString(), dateFormat).toLocalTime(), warningTimestampFormat);
+            Warning w(getPriority(warning[QStringLiteral("severity")].toString()), warning[QStringLiteral("headline")].toString());
+            w.setInfo(warningUrl);
+            w.setTimestamp(timestamp);
+            merged.insert(id, w);
+            const QJsonArray supersedes = warning[QStringLiteral("messageType")][QStringLiteral("supersedes")].toArray();
+            if (!supersedes.isEmpty()) {
+                for (const QJsonValue supersede : supersedes) {
+                    merged.remove(supersede.toString());
+                }
+            }
+        } else {
+            qWarning(WEATHER::ION::QWEATHER) << "Id" << id << "is found more than once.";
+        }
+    }
+    for (const Warning &w : merged.values()) {
+        success = success && !w.timestamp().value().isEmpty() && !w.description().isEmpty() && !w.info().value().isEmpty();
+        if (!success)
+            break;
+        warnings->addWarning(w);
+    }
+    if (success)
+        forecast->setWarnings(warnings);
+    return success;
 }
 
 #include "qweather.moc"

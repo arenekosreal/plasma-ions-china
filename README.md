@@ -76,7 +76,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.
 
-   For people who enables qweather ion, we only need to access GeoAPI, Weather, Warning and Weather Indices apis. 
+   For people who enables qweather ion, we only need to access GeoAPI, Weather and Warning apis. 
    You may limit the key's permission for security reasons. Please also note [QWeather's pricing tiers](https://dev.qweather.com/docs/finance/pricing/) so you will not have unexpected payments.
 
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.

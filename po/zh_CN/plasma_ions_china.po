@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-21 16:42+0800\n"
+"POT-Creation-Date: 2026-08-15 12:15+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgid "National Meteorological Center of China"
 msgstr "中国国家气象中心"
 
 #: src/nmccn/nmccn.cpp:118 src/plasma_engine_nmccn/nmccn.cpp:109
-#: src/qweather/qweather.cpp:182
+#: src/qweather/qweather.cpp:126
 #, qt-format
 msgid "Source: %1"
 msgstr "数据来源：%1"
@@ -31,46 +31,36 @@ msgstr "数据来源：%1"
 msgid "China"
 msgstr "中国"
 
-#: src/qweather/qweather.cpp:180
+#: src/qweather/qweather.cpp:126
 msgid "QWeather"
 msgstr "和风天气"
 
-#: src/qweather/qweather.cpp:634
-msgid "Little to no discomfort"
-msgstr "无不适感"
+#~ msgid "Little to no discomfort"
+#~ msgstr "无不适感"
 
-#: src/qweather/qweather.cpp:636
-msgid "Some discomfort"
-msgstr "略有不适"
+#~ msgid "Some discomfort"
+#~ msgstr "略有不适"
 
-#: src/qweather/qweather.cpp:638
-msgid "Great discomfort; avoid exertion"
-msgstr "非常不适；避免劳累"
+#~ msgid "Great discomfort; avoid exertion"
+#~ msgstr "非常不适；避免劳累"
 
-#: src/qweather/qweather.cpp:640
-msgid "Dangerous; heat stroke quite possible"
-msgstr "危险；极易中暑。"
+#~ msgid "Dangerous; heat stroke quite possible"
+#~ msgstr "危险；极易中暑。"
 
-#: src/qweather/qweather.cpp:680
-msgid "Extremely Poor"
-msgstr "极差"
+#~ msgid "Extremely Poor"
+#~ msgstr "极差"
 
-#: src/qweather/qweather.cpp:682
-msgid "Poor"
-msgstr "差"
+#~ msgid "Poor"
+#~ msgstr "差"
 
-#: src/qweather/qweather.cpp:684
-msgid "Relatively Poor"
-msgstr "较差"
+#~ msgid "Relatively Poor"
+#~ msgstr "较差"
 
-#: src/qweather/qweather.cpp:686
-msgid "General"
-msgstr "一般"
+#~ msgid "General"
+#~ msgstr "一般"
 
-#: src/qweather/qweather.cpp:688
-msgid "Good"
-msgstr "良"
+#~ msgid "Good"
+#~ msgstr "良"
 
-#: src/qweather/qweather.cpp:690
-msgid "Excellent"
-msgstr "优"
+#~ msgid "Excellent"
+#~ msgstr "优"

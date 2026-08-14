@@ -1,6 +1,5 @@
 #include <KUnitConversion/Unit>
 #include <QJsonObject>
-#include <QMutex>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QUrlQuery>
@@ -12,29 +11,6 @@
 class QWeather : public Ion
 {
     Q_OBJECT
-
-    // https://dev.qweather.com/docs/resource/indices-info/#index-type
-    enum IndexType {
-        ALL,
-        SPT,
-        CW,
-        DRSG,
-        FIS,
-        UV,
-        TRA,
-        AG,
-        COMF,
-        FLU,
-        AP,
-        AC,
-        GL,
-        MU,
-        DC,
-        PTFC,
-        SPI
-    };
-
-    Q_ENUM(IndexType)
 
 public:
     QWeather(QObject *parent);
@@ -49,9 +25,11 @@ private:
     constexpr static QJsonDocument::JsonFormat jsonFormat = QJsonDocument::Compact;
     constexpr static QByteArray::Base64Options base64Options = QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals;
     constexpr static Qt::ConnectionType signalConnectionType = (Qt::ConnectionType)(Qt::AutoConnection | Qt::SingleShotConnection);
+    constexpr static Qt::DateFormat dateFormat = Qt::ISODate;
+    constexpr static QLocale::FormatType warningTimestampFormat = QLocale::ShortFormat;
     constexpr static KUnitConversion::UnitId temperatureUnit = KUnitConversion::Celsius;
-    constexpr static KUnitConversion::UnitId windSpeedUnit = KUnitConversion::KilometerPerHour;
-    constexpr static KUnitConversion::UnitId visibilityUnit = KUnitConversion::Kilometer;
+    constexpr static KUnitConversion::UnitId windSpeedUnit = KUnitConversion::MeterPerSecond;
+    constexpr static KUnitConversion::UnitId visibilityUnit = KUnitConversion::Meter;
     constexpr static KUnitConversion::UnitId pressureUnit = KUnitConversion::Hectopascal;
     constexpr static KUnitConversion::UnitId preciptionUnit = KUnitConversion::Millimeter;
     constexpr static KUnitConversion::UnitId humidityUnit = KUnitConversion::Percent;
@@ -63,7 +41,6 @@ private:
     QDateTime retryAfter;
     QString currentToken;
     QNetworkAccessManager networkAccessManager;
-    QMutex mutex;
 
     const QString getJwtToken(const qint64 iatOffset = -30, const qint64 expOffset = 3 * 60 * 60) const;
     const QNetworkRequest makeApiRequest(const QString &path);
@@ -71,28 +48,10 @@ private:
     bool isCurrentJwtTokenNeedsRefresh(const qint64 expireOffset = -15 * 60) const;
     quint64 getRequestBackoffSeconds() const;
     void onNetworkError();
-    const LastObservation getLastObservation(const QJsonObject &response, const int uvIndex) const;
     ConditionIcons getWeatherIcon(const QString &icon, const bool windy) const;
-    Ion::WindDirections getWindDirectionIcon(const double degree) const;
-    const QString getWindDirectionIcon(const Ion::WindDirections windDirection) const;
-    void updateFutureDays(std::shared_ptr<FutureDays> futureDays, const QJsonObject &futureDaysResponse);
-
-    static const MetaData getMetaData(const QString &credit, const QString &creditUrl);
-    static int getIndexValue(const QJsonObject &indexResponse, const IndexType indexType, int defaultValue = -1);
-    static const QJsonObject extractResponse(QNetworkReply *reply);
-    static void updateWarnings(std::shared_ptr<Warnings> warnings, const QJsonObject &warningsResponse, const QString &info);
-    static qreal getWindChill(const qreal temperature, const qreal windSpeed);
-    static qreal getHeatIndexFromHumidity(const qreal temperature, const qreal humidity);
-    static qreal getHeatIndexFromDewpoint(const qreal temperature, const qreal dewpoint);
-    static const QString getHumidex(const qreal humidexValue);
-    static qreal getHumidex(const qreal temperature, const qreal dewpoint);
-    static qreal getDewpoint(const qreal temperature, const qreal humidity);
-    static Warnings::PriorityClass getPriority(const QString &severity);
-    static const QString getVisibility(const qreal visibilityValue);
+    const QJsonObject extractResponse(QNetworkReply *reply);
+    Warnings::PriorityClass getPriority(const QString &severity) const;
+    bool fillCurrentWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &currentResponse);
+    bool fillDailyWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &dailyResponse);
+    bool fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObject &warningsResponse, const QString &warningUrl);
 };
-
-const QString serialize(const Station &station);
-
-const Station deserialize(const QString &serialized);
-
-const Station stripNewPlaceInfo(const Station &station);
