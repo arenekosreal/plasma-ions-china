@@ -34,33 +34,3 @@ msgstr "中国"
 #: src/qweather/qweather.cpp:126
 msgid "QWeather"
 msgstr "和风天气"
-
-#~ msgid "Little to no discomfort"
-#~ msgstr "无不适感"
-
-#~ msgid "Some discomfort"
-#~ msgstr "略有不适"
-
-#~ msgid "Great discomfort; avoid exertion"
-#~ msgstr "非常不适；避免劳累"
-
-#~ msgid "Dangerous; heat stroke quite possible"
-#~ msgstr "危险；极易中暑。"
-
-#~ msgid "Extremely Poor"
-#~ msgstr "极差"
-
-#~ msgid "Poor"
-#~ msgstr "差"
-
-#~ msgid "Relatively Poor"
-#~ msgstr "较差"
-
-#~ msgid "General"
-#~ msgstr "一般"
-
-#~ msgid "Good"
-#~ msgstr "良"
-
-#~ msgid "Excellent"
-#~ msgstr "优"
