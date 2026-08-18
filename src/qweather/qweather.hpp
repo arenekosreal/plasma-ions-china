@@ -6,8 +6,6 @@
 
 #include <ion.h>
 
-#include "ed25519.hpp"
-
 class QWeather : public Ion
 {
     Q_OBJECT
@@ -34,8 +32,7 @@ private:
     constexpr static KUnitConversion::UnitId preciptionUnit = KUnitConversion::Millimeter;
     constexpr static KUnitConversion::UnitId humidityUnit = KUnitConversion::Percent;
 
-    const QEd25519PrivateKey privateKey = QEd25519PrivateKey::fromPEMFile(QStringLiteral(KEY_FILE));
-    const QUrl apiBase = QUrl(QStringLiteral("https://" API_HOST));
+    const QUrl apiBase;
 
     quint8 retryTimes = 0;
     QDateTime retryAfter;
@@ -54,4 +51,5 @@ private:
     bool fillCurrentWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &currentResponse);
     bool fillDailyWeather(std::shared_ptr<Forecast> forecast, const QJsonObject &dailyResponse);
     bool fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObject &warningsResponse, const QString &warningUrl);
+    const QByteArray signMessage(const QString &message) const;
 };

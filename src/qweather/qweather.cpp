@@ -14,15 +14,22 @@
 #include <QUrlQuery>
 #include <QtMath>
 
+#include <sodium.h>
+
 #include "qweather.hpp"
+#include "qweather_credential.hpp"
 #include "qweather_debug.hpp"
 
 K_PLUGIN_CLASS_WITH_JSON(QWeather, "metadata.json");
 
 QWeather::QWeather(QObject *parent)
     : Ion(parent)
+    , apiBase(QStringLiteral("https://" API_HOST))
     , networkAccessManager(this)
 {
+    if (sodium_init() < 0) {
+        qFatal(WEATHER::ION::QWEATHER) << "Failed to initialize libsodium.";
+    }
 }
 
 QWeather::~QWeather()
@@ -204,7 +211,7 @@ const QString QWeather::getJwtToken(const qint64 iatOffset, const qint64 expOffs
     payload[QStringLiteral("exp")] = QJsonValue::fromVariant(currentTime + expOffset);
     const QString payloadBase64 = QString::fromUtf8(QJsonDocument(payload).toJson(jsonFormat).toBase64(base64Options));
     const QString toBeSigned = headerBase64 + QStringLiteral(".") + payloadBase64;
-    const QString signature = QString::fromUtf8(privateKey.signMessage(toBeSigned).toBase64(base64Options));
+    const QString signature = QString::fromUtf8(signMessage(toBeSigned).toBase64(base64Options));
     const QString token = toBeSigned + QStringLiteral(".") + signature;
     qDebug(WEATHER::ION::QWEATHER) << "Generated token:" << token;
     return token;
@@ -518,6 +525,18 @@ bool QWeather::fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObjec
     if (success)
         forecast->setWarnings(warnings);
     return success;
+}
+
+const QByteArray QWeather::signMessage(const QString &message) const
+{
+    unsigned char publicKey[crypto_sign_ed25519_PUBLICKEYBYTES];
+    unsigned char secretKey[crypto_sign_ed25519_SECRETKEYBYTES];
+    crypto_sign_ed25519_seed_keypair(publicKey, secretKey, PRIVATE_KEY_SEED);
+    unsigned char signature[crypto_sign_ed25519_BYTES];
+    unsigned long long signatureSize;
+    const QByteArray messageData = message.toUtf8();
+    crypto_sign_ed25519_detached(signature, &signatureSize, reinterpret_cast<const unsigned char *>(messageData.constData()), messageData.size(), secretKey);
+    return QByteArray(reinterpret_cast<const char *>(signature), signatureSize);
 }
 
 #include "qweather.moc"
