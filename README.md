@@ -21,8 +21,6 @@ That's why this project is created. We collect some weather apis focus on Chines
 
 ## Usage
 
-You should be able to search Chinese cities and obtain weather report in KDE's weather widget after installed this.
-
 1. Install [dependencies](#dependencies)
 2. Clone this repository using git or downloading archive
 3. Build and install the project:
@@ -55,7 +53,7 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
       ....<base64>....
       -----END PRIVATE KEY-----
       ```
-      The last 32 byes of the decoded private key must be the seed.
+      The private key must **NOT** have a password, the last 32 byes of the decoded private key must be the seed.
       You can use `openssl genpkey -algorithm ED25519 -out ed25519-private.pem` to generate the private key.
       Use `openssl pkey -pubout -in ed25519-private.pem > ed25519-public.pem` to get the public key to be registered to QWeather.
       
@@ -76,19 +74,21 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
    There is no need to set `CMAKE_INSTALL_PREFIX`, because it will follow KDE's and not be configurable. That means most of the time it is `/usr`.
    Because of this, it is strongly recommended that you should create a package for your Linux Distribution.
 
-   For people who enables qweather ion, we only need to access GeoAPI, Weather and Warning apis. 
-   You may limit the key's permission for security reasons. Please also note [QWeather's pricing tiers](https://dev.qweather.com/docs/finance/pricing/) so you will not have unexpected payments.
-
 4. Open KDE's weather widget (org.kde.plasma.weather) and search Chinese cities like Beijing, etc.
 
    For just experiencing, you can run `plasmoidviewer -a org.kde.plasma.weather` after you installed `plasma-sdk`.
 
 ### Dependencies
 
+These dependencies are archlinux's names, for other distributions, please adjust them as you like.
+For example, the runtime dependencies still need their development files at buildtime, on those distributions that split them into independent packages like Debian/Fedora, etc, you may need to install them, too.
+But those development files are just buildtime dependencies, you can remove them as you like after building.
+
 #### Runtime dependencies
 
 - qt6-base
-- plasma-workspace < 6.5 OR kdeplasma-addons >= 6.5
+- plasma-workspace (If you enabled the legacy ions)
+- kdeplasma-addons (If you enabled the modern ions)
 - libsodium (If you enabled the qweather ion)
 
 #### Buildtime extra dependencies
@@ -99,10 +99,21 @@ You should be able to search Chinese cities and obtain weather report in KDE's w
 
 ## Ions
 
-|Name|Description|Comment|Reverse Engineered|Modern|Legacy|
-|----|-----------|-------|------------------|------|------|
-|nmccn|The ion uses api from www.nmc.cn to obtain weather report|The passed daytime report is not available when is night.|Y|[Y](./src/nmccn)|[Y](./src/plasma_engine_nmccn)|
-|qweather|The ion uses api from www.qweather.com to obtain weather report||N|[Y](./src/qweather)|N|
+|Name|Data Source|Reverse Engineered|Modern|Legacy|
+|----|-----------|------------------|------|------|
+|nmccn|[National Meteorological Center of China](https://www.nmc.cn)|Y|[Y](./src/nmccn)|[Y](./src/plasma_engine_nmccn)|
+|qweather|[QWeather](https://www.qweather.com)|N|[Y](./src/qweather)|N|
+
+### Notes for the Ions
+
+#### National Meteorological Center of China
+
+The passed daytime report is not available when is night. There is no cache mechanism, so you'll find that the daytime's report is missing at night.
+
+#### QWeather
+
+We only need to access [GeoAPI](https://dev.qweather.com/docs/api/geoapi/), [Current Weather](https://dev.qweather.com/docs/api/weather/weather-current/), [Daily Weather](https://dev.qweather.com/docs/api/weather/weather-daily-forecast/) and [Warning](https://dev.qweather.com/docs/api/warning/) apis, you may limit the key's permission for security reasons. 
+Please also note [QWeather's pricing tiers](https://dev.qweather.com/docs/finance/pricing/) so you will not have unexpected payments.
 
 ## Adding new ion
 
