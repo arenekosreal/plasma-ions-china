@@ -32,19 +32,12 @@ private:
     constexpr static KUnitConversion::UnitId preciptionUnit = KUnitConversion::Millimeter;
     constexpr static KUnitConversion::UnitId humidityUnit = KUnitConversion::Percent;
 
-    const QUrl apiBase;
-
-    quint8 retryTimes = 0;
-    QDateTime retryAfter;
     QString currentToken;
     QNetworkAccessManager networkAccessManager;
 
     const QString getJwtToken(const qint64 iatOffset = -30, const qint64 expOffset = 3 * 60 * 60) const;
-    const QNetworkRequest makeApiRequest(const QString &path);
-    const QNetworkRequest makeApiRequest(const QString &path, const QUrlQuery &query);
+    const QNetworkRequest makeApiRequest(const QString &path, const QUrlQuery &query = QUrlQuery());
     bool isCurrentJwtTokenNeedsRefresh(const qint64 expireOffset = -15 * 60) const;
-    quint64 getRequestBackoffSeconds() const;
-    void onNetworkError();
     ConditionIcons getWeatherIcon(const QString &icon, const bool windy) const;
     const QJsonObject extractResponse(QNetworkReply *reply);
     Warnings::PriorityClass getPriority(const QString &severity) const;

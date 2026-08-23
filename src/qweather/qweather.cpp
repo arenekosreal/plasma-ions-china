@@ -24,7 +24,6 @@ K_PLUGIN_CLASS_WITH_JSON(QWeather, "metadata.json");
 
 QWeather::QWeather(QObject *parent)
     : Ion(parent)
-    , apiBase(QStringLiteral("https://" API_HOST))
     , networkAccessManager(this)
 {
     if (sodium_init() < 0) {
@@ -39,11 +38,6 @@ QWeather::~QWeather()
 
 void QWeather::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> promise, const QString &searchString)
 {
-    if (retryAfter.isValid() && QDateTime::currentDateTime() <= retryAfter) {
-        qWarning(WEATHER::ION::QWEATHER) << "Request has been stopped due to errors.";
-        qWarning(WEATHER::ION::QWEATHER) << "Check other logs to find out reason.";
-        return;
-    }
     promise->start();
     if (promise->isCanceled()) {
         qDebug(WEATHER::ION::QWEATHER) << "Search request has been cancelled.";
@@ -66,7 +60,6 @@ void QWeather::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> 
             if (response.isEmpty()) {
                 qWarning(WEATHER::ION::QWEATHER) << "Got empty response object.";
                 promise->finish();
-                onNetworkError();
                 return;
             }
             std::shared_ptr<Locations> locations = std::make_shared<Locations>();
@@ -89,19 +82,12 @@ void QWeather::findPlaces(std::shared_ptr<QPromise<std::shared_ptr<Locations>>> 
             }
             promise->addResult(locations);
             promise->finish();
-            retryTimes = 0;
-            retryAfter = QDateTime();
         },
         signalConnectionType);
 }
 
 void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> promise, const QString &placeInfo)
 {
-    if (retryAfter.isValid() && QDateTime::currentDateTime() <= retryAfter) {
-        qWarning(WEATHER::ION::QWEATHER) << "Request has been stopped due to errors.";
-        qWarning(WEATHER::ION::QWEATHER) << "Check other logs to find out reason.";
-        return;
-    }
     promise->start();
     if (promise->isCanceled()) {
         qDebug(WEATHER::ION::QWEATHER) << "Fetch request has been cancelled.";
@@ -124,7 +110,6 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
             if (response.isEmpty()) {
                 qWarning(WEATHER::ION::QWEATHER) << "Unable to get valid response object.";
                 promise->finish();
-                onNetworkError();
                 return;
             }
             const QJsonValue matched = response[QStringLiteral("location")].toArray().first();
@@ -163,7 +148,6 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for current weather" << currentResponse;
                 if (currentResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current weather";
-                    onNetworkError();
                     return false;
                 }
                 return fillCurrentWeather(forecast, currentResponse);
@@ -173,7 +157,6 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for daily weather" << dailyResponse;
                 if (dailyResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for daily weather";
-                    onNetworkError();
                     return false;
                 }
                 return fillDailyWeather(forecast, dailyResponse);
@@ -183,7 +166,6 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for current warnings" << warningResponse;
                 if (warningResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current warnings";
-                    onNetworkError();
                     return false;
                 }
                 const QString warningUrl = QString(forecast->metaData().value<MetaData>().creditURL().toString())
@@ -232,16 +214,11 @@ const QString QWeather::getJwtToken(const qint64 iatOffset, const qint64 expOffs
     return token;
 }
 
-const QNetworkRequest QWeather::makeApiRequest(const QString &path)
-{
-    return makeApiRequest(path, QUrlQuery());
-}
-
 const QNetworkRequest QWeather::makeApiRequest(const QString &path, const QUrlQuery &query)
 {
     if (isCurrentJwtTokenNeedsRefresh())
         currentToken = getJwtToken();
-    QUrl url(apiBase);
+    QUrl url(QStringLiteral("https://" API_HOST));
     url.setPath(path);
     if (!query.isEmpty())
         url.setQuery(query);
@@ -252,20 +229,6 @@ const QNetworkRequest QWeather::makeApiRequest(const QString &path, const QUrlQu
     qDebug(WEATHER::ION::QWEATHER) << "Generated request url" << req.url();
     qDebug(WEATHER::ION::QWEATHER) << "Generated request header" << req.headers();
     return req;
-}
-
-quint64 QWeather::getRequestBackoffSeconds() const
-{
-    if (retryTimes > 0) {
-        qint64 retryAfter = qPow(2, retryTimes);
-        QRandomGenerator rng;
-        qint64 delay = -1;
-        while (delay < 0 || delay > retryAfter - 1) {
-            delay = rng.generate();
-        }
-        return retryAfter + delay;
-    }
-    return 0;
 }
 
 bool QWeather::isCurrentJwtTokenNeedsRefresh(const qint64 expireOffset) const
@@ -283,14 +246,6 @@ bool QWeather::isCurrentJwtTokenNeedsRefresh(const qint64 expireOffset) const
         return expireTimestamp + expireOffset - QDateTime::currentSecsSinceEpoch() <= 0;
     }
     return true;
-}
-
-void QWeather::onNetworkError()
-{
-    if (retryTimes < (quint8)0xff)
-        retryTimes++;
-    else
-        qWarning(WEATHER::ION::QWEATHER) << "Too many errors";
 }
 
 const QJsonObject QWeather::extractResponse(QNetworkReply *reply)
