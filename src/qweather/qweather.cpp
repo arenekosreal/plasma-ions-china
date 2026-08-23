@@ -158,42 +158,57 @@ void QWeather::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>
             const QNetworkRequest warningRequest = makeApiRequest(
                 QStringLiteral("/weatheralert/v1/current/%1/%2").arg(station.latitude().toDouble(), 0, 'f', 2).arg(station.longitude().toDouble(), 0, 'f', 2));
             QNetworkReply *warningReply = networkAccessManager.get(warningRequest);
-            QFuture<void> everythingFinished = QtFuture::whenAll(QtFuture::connect(currentReply, &QNetworkReply::finished),
-                                                                 QtFuture::connect(dailyReply, &QNetworkReply::finished),
-                                                                 QtFuture::connect(warningReply, &QNetworkReply::finished));
-            everythingFinished.then(this, [=] {
+            QFuture<bool> currentReplyFinished = QtFuture::connect(currentReply, &QNetworkReply::finished).then(this, [=]() {
                 const QJsonObject currentResponse = extractResponse(currentReply);
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for current weather" << currentResponse;
                 if (currentResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current weather";
-                    promise->finish();
                     onNetworkError();
-                    return;
+                    return false;
                 }
+                return fillCurrentWeather(forecast, currentResponse);
+            });
+            QFuture<bool> dailyReplyFinished = QtFuture::connect(dailyReply, &QNetworkReply::finished).then(this, [=]() {
                 const QJsonObject dailyResponse = extractResponse(dailyReply);
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for daily weather" << dailyResponse;
                 if (dailyResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for daily weather";
-                    promise->finish();
                     onNetworkError();
-                    return;
+                    return false;
                 }
+                return fillDailyWeather(forecast, dailyResponse);
+            });
+            QFuture<bool> warningReplyFinished = QtFuture::connect(warningReply, &QNetworkReply::finished).then(this, [=]() {
                 const QJsonObject warningResponse = extractResponse(warningReply);
                 qDebug(WEATHER::ION::QWEATHER) << "Got response for current warnings" << warningResponse;
                 if (warningResponse.isEmpty()) {
                     qWarning(WEATHER::ION::QWEATHER) << "Got empty response for current warnings";
-                    promise->finish();
                     onNetworkError();
-                    return;
+                    return false;
                 }
                 const QString warningUrl = QString(forecast->metaData().value<MetaData>().creditURL().toString())
                                                .replace(QStringLiteral("/weather/"), QStringLiteral("/severe-weather/"));
-                if (fillCurrentWeather(forecast, currentResponse) && fillDailyWeather(forecast, dailyResponse)
-                    && fillWarnings(forecast, warningResponse, warningUrl)) {
-                    promise->addResult(forecast);
-                }
-                promise->finish();
+                return fillWarnings(forecast, warningResponse, warningUrl);
             });
+            QtFuture::whenAll(currentReplyFinished, dailyReplyFinished, warningReplyFinished)
+                .then(this, [=](const QList<std::variant<QFuture<bool>, QFuture<bool>, QFuture<bool>>> &results) {
+                    bool success = true;
+                    for (const std::variant<QFuture<bool>, QFuture<bool>, QFuture<bool>> &result : results) {
+                        std::visit(
+                            [&success](const QFuture<bool> &future) {
+                                success = success && future.result();
+                            },
+                            result);
+                        if (!success) {
+                            qDebug(WEATHER::ION::QWEATHER) << "Found invalid forecast.";
+                            break;
+                        }
+                    }
+                    if (success) {
+                        promise->addResult(forecast);
+                    }
+                    promise->finish();
+                });
         },
         signalConnectionType);
 }
