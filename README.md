@@ -21,6 +21,19 @@ That's why this project is created. We collect some weather apis focus on Chines
 
 ## Usage
 
+### Managed Installation
+
+Those packages are managed by the distribution' s package manager.
+
+**DISCLAIMER:** Those packages are not maintained by us, use it at your own risk.
+
+- [archlinuxcn/plasma-ions-china-git](https://github.com/archlinuxcn/repo/tree/master/archlinuxcn/plasma-ions-china-git)
+- [aur/plasma-ions-china-git](https://aur.archlinux.org/packages/plasma-ions-china-git)
+- [aur/plasma-ions-china](https://aur.archlinux.org/packages/plasma-ions-china)
+- [gentoo-zh/plasma-ions-china](https://github.com/gentoo-zh/overlay/tree/master/kde-misc/plasma-ions-china)
+
+### Building
+
 1. Install [dependencies](#dependencies)
 2. Clone this repository using git or downloading archive
 3. Build and install the project:
