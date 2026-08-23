@@ -99,10 +99,10 @@ But those development files are just buildtime dependencies, you can remove them
 
 ## Ions
 
-|Name|Data Source|Reverse Engineered|Modern|Legacy|
-|----|-----------|------------------|------|------|
-|nmccn|[National Meteorological Center of China](https://www.nmc.cn)|Y|[Y](./src/nmccn)|[Y](./src/plasma_engine_nmccn)|
-|qweather|[QWeather](https://www.qweather.com)|N|[Y](./src/qweather)|N|
+|Name|Data Source|Reverse Engineered|Modern|Legacy|Anoymous Accessable|
+|----|-----------|------------------|------|------|---------------------|
+|nmccn|[National Meteorological Center of China](https://www.nmc.cn)|Y|[Y](./src/nmccn)|[Y](./src/plasma_engine_nmccn)|Y|
+|qweather|[QWeather](https://www.qweather.com)|N|[Y](./src/qweather)|N|N|
 
 ### Notes for the Ions
 
