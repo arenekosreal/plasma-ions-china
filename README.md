@@ -80,7 +80,11 @@ They are not indexed above for various reasons, you can consider using them if y
    - `PLASMA_IONS_CHINA_QWEATHER_KID`: The key ID given by QWeather after you registered the public key. 
    
       If this option is missing, the qweather ion will be skipped.
-   
+
+   - `PLASMA_IONS_CHINA_QWEATHER_ISS`: The developer ID given by QWeather after you registered an account.
+
+      If this option is missing, the qweather ion will be skipped.
+
    - `PLASMA_IONS_CHINA_QWEATHER_SUB`: The project ID given by QWeather after you created the project.
    
       If this option is missing, the qweather ion will be skipped.

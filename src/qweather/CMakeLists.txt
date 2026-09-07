@@ -4,6 +4,9 @@ set(CACHE{PLASMA_IONS_CHINA_QWEATHER_PRIVATE_KEY} TYPE FILEPATH
 set(CACHE{PLASMA_IONS_CHINA_QWEATHER_KID} TYPE STRING
     HELP "The kid of qweather jwt token header."
     VALUE "")
+set(CACHE{PLASMA_IONS_CHINA_QWEATHER_ISS} TYPE STRING
+    HELP "The iss of qweather jwt token payload."
+    VALUE "")
 set(CACHE{PLASMA_IONS_CHINA_QWEATHER_SUB} TYPE STRING
     HELP "The sub of qweather jwt token payload."
     VALUE "")
@@ -19,6 +22,10 @@ if (NOT PLASMA_IONS_CHINA_QWEATHER_KID)
     message(WARNING "qweather: KID is empty, skip adding QWeather ion.")
     return()
 endif()
+if (NOT PLASMA_IONS_CHINA_QWEATHER_ISS)
+    message(WARNING "qweather: ISS is empty, skip adding QWeather ion.")
+    return()
+endif()
 if (NOT PLASMA_IONS_CHINA_QWEATHER_SUB)
     message(WARNING "qweather: SUB is empty, skip adding QWeather ion.")
     return()
@@ -30,7 +37,7 @@ endif()
 
 function(plasma_ions_china_declare_qweather_credential)
     set(options)
-    set(oneValueArgs PRIVATE_KEY KID SUB API_HOST HEADER)
+    set(oneValueArgs PRIVATE_KEY KID ISS SUB API_HOST HEADER)
     set(multiValuesArgs)
 
     cmake_parse_arguments(PARSE_ARGV 1 PLASMA_IONS_CHINA
@@ -70,6 +77,7 @@ lines = [
     "#pragma once",
     "",
     "#define KID \"@PLASMA_IONS_CHINA_KID@\"",
+    "#define ISS \"@PLASMA_IONS_CHINA_ISS@\"",
     "#define SUB \"@PLASMA_IONS_CHINA_SUB@\"",
     "#define API_HOST \"@PLASMA_IONS_CHINA_API_HOST@\"",
 ]
@@ -111,6 +119,7 @@ ecm_qt_declare_logging_category(qweather
 plasma_ions_china_declare_qweather_credential(qweather
     PRIVATE_KEY "${PLASMA_IONS_CHINA_QWEATHER_PRIVATE_KEY}"
     KID "${PLASMA_IONS_CHINA_QWEATHER_KID}"
+    ISS "${PLASMA_IONS_CHINA_QWEATHER_ISS}"
     SUB "${PLASMA_IONS_CHINA_QWEATHER_SUB}"
     API_HOST "${PLASMA_IONS_CHINA_QWEATHER_API_HOST}"
     HEADER qweather_credential.hpp)

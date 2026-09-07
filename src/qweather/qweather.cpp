@@ -202,6 +202,7 @@ const QString QWeather::getJwtToken(const qint64 iatOffset, const qint64 expOffs
     header[QStringLiteral("kid")] = QStringLiteral(KID);
     const QString headerBase64 = QString::fromUtf8(QJsonDocument(header).toJson(jsonFormat).toBase64(base64Options));
     QJsonObject payload;
+    payload[QStringLiteral("iss")] = QStringLiteral(ISS);
     payload[QStringLiteral("sub")] = QStringLiteral(SUB);
     const quint64 currentTime = QDateTime::currentSecsSinceEpoch();
     payload[QStringLiteral("iat")] = QJsonValue::fromVariant(currentTime + iatOffset);
