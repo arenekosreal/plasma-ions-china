@@ -253,3 +253,13 @@ We take `nmccn` as an example here about how to add a new ion:
 8. Update documentation
 
    You need to update [Ions](#ions) table in this README by following existing entries.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=arenekosreal%2Fplasma-ions-china&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=arenekosreal/plasma-ions-china&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=arenekosreal/plasma-ions-china&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=arenekosreal/plasma-ions-china&type=date&legend=top-left" />
+ </picture>
+</a>
