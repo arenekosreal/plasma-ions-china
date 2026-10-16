@@ -416,7 +416,12 @@ bool QWeather::fillDailyWeather(std::shared_ptr<Forecast> forecast, const QJsonO
     std::shared_ptr<FutureDays> fd = std::make_shared<FutureDays>();
     bool success = true;
     for (const QJsonValue day : dailyResponse[QStringLiteral("days")].toArray()) {
+        const QDateTime forecastTime = QDateTime::fromString(day[QStringLiteral("forecastStartTime")].toString(), dateFormat).toLocalTime();
+#ifdef TIMESTAMP_USE_QDATETIME
+        FutureDayForecast fdf(forecastTime);
+#else
         FutureDayForecast fdf;
+#endif
         FutureForecast daytime, nighttime;
         const bool daytimeWindy = day[QStringLiteral("daytime")][QStringLiteral("wind")][QStringLiteral("scale")].toInt() > 2,
                    nighttimeWindy = day[QStringLiteral("nighttime")][QStringLiteral("wind")][QStringLiteral("scale")].toInt() > 2;
@@ -448,13 +453,14 @@ bool QWeather::fillDailyWeather(std::shared_ptr<Forecast> forecast, const QJsonO
         if (!success)
             break;
         fdf.setNight(nighttime);
-        const QDateTime forecastTime = QDateTime::fromString(day[QStringLiteral("forecastStartTime")].toString(), dateFormat).toLocalTime();
         qDebug(WEATHER::ION::QWEATHER) << "Got future forecast for" << forecastTime;
+#ifndef TIMESTAMP_USE_QDATETIME
         fdf.setMonthDay(forecastTime.date().day());
         fdf.setWeekDay(QLocale().dayName(forecastTime.date().dayOfWeek()));
         success = success && fdf.monthDay().value() > 0;
         if (!success)
             break;
+#endif
         fd->addDay(fdf);
     }
     if (success) {
@@ -471,8 +477,12 @@ bool QWeather::fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObjec
     for (const QJsonValue warning : warningsResponse[QStringLiteral("alerts")].toArray()) {
         const QString id = warning[QStringLiteral("id")].toString();
         if (!merged.contains(id)) {
+#ifdef TIMESTAMP_USE_QDATETIME
+            const QDateTime timestamp = QDateTime::fromString(warning[QStringLiteral("issuedTime")].toString(), dateFormat).toLocalTime();
+#else
             const QString timestamp =
                 QLocale().toString(QDateTime::fromString(warning[QStringLiteral("issuedTime")].toString(), dateFormat).toLocalTime(), warningTimestampFormat);
+#endif
             Warning w(getPriority(warning[QStringLiteral("severity")].toString()), warning[QStringLiteral("headline")].toString());
             w.setInfo(warningUrl);
             w.setTimestamp(timestamp);
@@ -488,7 +498,15 @@ bool QWeather::fillWarnings(std::shared_ptr<Forecast> forecast, const QJsonObjec
         }
     }
     for (const Warning &w : merged.values()) {
-        success = success && !w.timestamp().value().isEmpty() && !w.description().isEmpty() && !w.info().value().isEmpty();
+        success = success
+            && !w.timestamp()
+                    .value()
+#ifdef TIMESTAMP_USE_QDATETIME
+                    .isValid()
+#else
+                    .isEmpty()
+#endif
+            && !w.description().isEmpty() && !w.info().value().isEmpty();
         if (!success)
             break;
         warnings->addWarning(w);

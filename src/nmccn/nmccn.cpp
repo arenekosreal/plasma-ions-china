@@ -182,8 +182,13 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                     std::shared_ptr<FutureDays> futureDays = std::make_shared<FutureDays>();
                     const QJsonArray details = object[QStringLiteral("predict")][QStringLiteral("detail")].toArray();
                     for (const QJsonValue &detail : details) {
+                        const QDateTime timestamp = QDateTime::fromString(detail[QStringLiteral("date")].toString(), fullDateFormat);
+#ifdef TIMESTAMP_USE_QDATETIME
+                        FutureDayForecast futureDayForecast(timestamp);
+#else
                         FutureDayForecast futureDayForecast;
-                        const QDate date = QDate::fromString(detail[QStringLiteral("date")].toString(), fullDateFormat);
+#endif
+                        const QDate date = timestamp.date();
                         const QString dayInfo = detail[QStringLiteral("day")][QStringLiteral("weather")][QStringLiteral("info")].toString(),
                                       dayImg = detail[QStringLiteral("day")][QStringLiteral("weather")][QStringLiteral("img")].toString(),
                                       dayTemperature = detail[QStringLiteral("day")][QStringLiteral("weather")][QStringLiteral("temperature")].toString();
@@ -211,8 +216,10 @@ void NmcCn::fetchForecast(std::shared_ptr<QPromise<std::shared_ptr<Forecast>>> p
                             qWarning(WEATHER::ION::NMCCN)
                                 << "Skipping invalid night detail" << detail[QStringLiteral("night")].toObject() << "for date" << date;
                         }
+#ifndef TIMESTAMP_USE_QDATETIME
                         futureDayForecast.setMonthDay(date.day());
                         futureDayForecast.setWeekDay(QLocale().dayName(date.dayOfWeek()));
+#endif
                         futureDays->addDay(futureDayForecast);
                     }
                     forecast->setFutureDays(futureDays);
