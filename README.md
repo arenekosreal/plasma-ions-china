@@ -26,16 +26,17 @@ That's why this project is created. We collect some weather apis focus on Chines
 You can find if your distribution has this project packaged here.
 If so, you are in luck to install it directly using the related package manager, instead [building](#building) it yourself.
 
-**DISCLAIMER:** Those packages are not maintained by us, use it at your own risk.
+**DISCLAIMER:** Those packages are not maintained by us, use them at your own risk.
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/plasma-ions-china.svg)](https://repology.org/project/plasma-ions-china/versions)
 
 #### Other Repositories
 
-They are not indexed above for various reasons, you can consider using them if you are using those repository.
+They are not indexed above for various reasons, you can consider using them if neededd.
 
 - [archlinuxcn/plasma-ions-china-git](https://github.com/archlinuxcn/repo/tree/master/archlinuxcn/plasma-ions-china-git)
 - [kde-misc/plasma-ions-china](https://github.com/gentoo-zh/overlay/tree/master/kde-misc/plasma-ions-china)
+- [copr/ne0w0r1d/plasma-ion-china](https://copr.fedorainfracloud.org/coprs/ne0w0r1d/plasma-ion-china/)
 
 ### Building
 
