@@ -1,7 +1,0 @@
-.cache
-/build/
-/.clang-format
-*.pem
-*.key
-# Backup files
-*~
